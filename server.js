@@ -93,7 +93,17 @@ router.route('/movies')
 
             res.json({ success: true, message: 'Movie created!' });
         });
+    })
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        var movieNew = new Movie();
+        movieNew = req.body.title;
+
+        Movie.findOne({ title: movieNew.title }).select('*').exec(function(err, user) {
+            if (err) res.send(err);
+            res.status(200).send({msg : "GET movies"});
+        });
     });
+
 
 
 router.post('/signin', function(req, res) {
