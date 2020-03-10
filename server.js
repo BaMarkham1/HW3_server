@@ -100,7 +100,7 @@ router.route('/movies')
 
         Movie.findOne({ title: movieNew.title }).select('*').exec(function(err, user) {
             if (err) res.send(err);
-            res.status(200).send({msg : "GET movies"});
+            res.status(200).send({msg : "GET movies", movie: Movie});
         });
     });
 
