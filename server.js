@@ -98,11 +98,11 @@ router.route('/movies')
         var movieNew = new Movie();
         movieNew = req.body.title;
 
-        Movie.findOne({ title: movieNew.title }).select('*').exec(function(err, movie) {
+        Movie.findOne({ title: movieNew.title }).select('title genre').exec(function(err, movie) {
             if (err) res.send(err);
-
+            res.status(200).send({msg : "GET movies", title: movie.title, genre: movie.genre});
         });
-        res.status(200).send({msg : "GET movies", title: movie.title, genre: movie.genre});
+
     });
 
 
