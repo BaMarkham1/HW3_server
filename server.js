@@ -76,9 +76,9 @@ router.post('/signup', function(req, res) {
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
         var movie = new Movie();
-        movie.title = req.title;
-        movie.year = req.year;
-        movie.genre = req.genre;
+        movie.title = req.body.title;
+        movie.year = req.body.year;
+        movie.genre = req.body.genre;
         //movie.actors = req.actors;
         // save the movie
         movie.save(function(err) {
