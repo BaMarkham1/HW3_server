@@ -98,9 +98,9 @@ router.route('/movies')
         var movieNew = new Movie();
         movieNew = req.body.title;
 
-        Movie.findOne({ title: movieNew.title }).select('*').exec(function(err, user) {
+        Movie.findOne({ title: movieNew.title }).select('*').exec(function(err, movie) {
             if (err) res.send(err);
-            res.status(200).send({msg : "GET movies", movie: Movie});
+            res.status(200).send({msg : "GET movies", movie: movie});
         });
     });
 
