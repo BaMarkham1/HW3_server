@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var authJwtController = require('./auth_jwt');
 var User = require('./Users');
+var Movie = require('./Movies');
 var jwt = require('jsonwebtoken');
 //var coors = require('coors');
 
@@ -71,6 +72,28 @@ router.post('/signup', function(req, res) {
         });
     }
 });
+
+router.route('/movies')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+        var movie = new Movie();
+        movie.title = req.title;
+        movie.year = req.year;
+        movie.genre = req.genre;
+        //movie.actors = req.actors;
+        // save the movie
+        movie.save(function(err) {
+            if (err) {
+                // duplicate entry
+                if (err.code == 11000)
+                    return res.json({ success: false, message: 'A movie with that title already exists. '});
+                else
+                    return res.send(err);
+            }
+
+            res.json({ success: true, message: 'Movie created!' });
+        });
+    });
+
 
 router.post('/signin', function(req, res) {
     var userNew = new User();
