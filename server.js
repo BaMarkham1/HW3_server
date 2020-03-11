@@ -111,7 +111,7 @@ router.route('/movies')
         }
     })
     .put(authJwtController.isAuthenticated, function (req, res) {
-        var movie ={};
+        var movie = {};
         movie.title = req.body.title;
         movie.year = req.body.year;
         movie.genre = req.body.genre;
@@ -126,8 +126,11 @@ router.route('/movies')
             else {
                 res.status(200).send({msg: "updated movie"});
             }
+        })
+        .put(authJwtController.isAuthenticated, function (req, res) {
+            Movie.remove({title: req.body.title});
+            res.status(200).send({msg: "deleted movie"});
         });
-
     });
 
 
