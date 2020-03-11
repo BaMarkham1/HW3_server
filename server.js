@@ -119,8 +119,12 @@ router.route('/movies')
         movie.char_name = req.body.char_name;
         // save the movie
         movie.update({title:req.body.current_title}, movie, function(err) {
-            if (err) res.send(err);
-            res.status(200).send({msg: "updated movie"});
+            if (err){
+                res.send(err);
+            }
+            else {
+                res.status(200).send({msg: "updated movie"});
+            }
         });
 
     });
