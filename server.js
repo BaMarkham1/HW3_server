@@ -127,7 +127,7 @@ router.route('/movies')
                 res.status(200).send({msg: "updated movie"});
             }
         })
-        .put(authJwtController.isAuthenticated, function (req, res) {
+        .delete(authJwtController.isAuthenticated, function (req, res) {
             Movie.remove({title: req.body.title});
             res.status(200).send({msg: "deleted movie"});
         });
