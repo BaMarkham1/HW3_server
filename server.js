@@ -96,13 +96,19 @@ router.route('/movies')
     })
     .get(authJwtController.isAuthenticated, function (req, res) {
         var movieNew = new Movie();
-        movieNew.title = req.body.title;
-
-        Movie.findOne({ title: movieNew.title }).select('title year genre actor_name char_name').exec(function(err, movie) {
-            if (err) res.send(err);
-            res.status(200).send({msg : "GET movies", movie: movie});
-        });
-
+        if (req.body.title) {
+            movieNew.title = req.body.title;
+            Movie.findOne({title: movieNew.title}).select('title year genre actor_name char_name').exec(function (err, movie) {
+                if (err) res.send(err);
+                res.status(200).send({msg: "GET movie", movie: movie});
+            });
+        }
+        else{
+            Movie.find().select('title year genre actor_name char_name').exec(function (err, movie) {
+                if (err) res.send(err);
+                res.status(200).send({msg: "GET movies", movies: movie});
+            });
+        }
     });
 
 
