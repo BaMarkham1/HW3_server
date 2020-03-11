@@ -96,7 +96,7 @@ router.route('/movies')
     })
     .get(authJwtController.isAuthenticated, function (req, res) {
         var movieNew = new Movie();
-        movieNew = req.body.title;
+        movieNew.title = req.body.title;
 
         Movie.findOne({ title: movieNew.title }).select('title genre').exec(function(err, movie) {
             if (err) res.send(err);
