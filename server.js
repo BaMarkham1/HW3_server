@@ -118,7 +118,7 @@ router.route('/movies')
         movie.actor_name = req.body.actor_name;
         movie.char_name = req.body.char_name;
         // save the movie
-        Movie.updateOne({title:req.body.current_title}, movie, function(err) {
+        Movie.updateOne({title:req.body.current_title}, {$set: movie}, function(err) {
             if (err){
                 res.send(err);
             }
