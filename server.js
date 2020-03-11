@@ -111,14 +111,15 @@ router.route('/movies')
         }
     })
     .put(authJwtController.isAuthenticated, function (req, res) {
-        //var movie ;
-        //movie.title = req.body.title;
-        //movie.year = req.body.year;
-        //movie.genre = req.body.genre;
-        //movie.actor_name = req.body.actor_name;
-        //movie.char_name = req.body.char_name;
+        var movie;
+        movie.title = req.body.title;
+        movie.year = req.body.year;
+        movie.genre = req.body.genre;
+        movie.actor_name = req.body.actor_name;
+        movie.char_name = req.body.char_name;
         // save the movie
-        Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
+        Movie.updateOne({title:req.body.current_title}, {$set: movie}, function(err) {
+        //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
             if (err){
                 res.send(err);
             }
