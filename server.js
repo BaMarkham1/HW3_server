@@ -109,6 +109,20 @@ router.route('/movies')
                 res.status(200).send({msg: "GET movies", movies: movie});
             });
         }
+    })
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        var movie = new Movie();
+        movie.title = req.body.title;
+        movie.year = req.body.year;
+        movie.genre = req.body.genre;
+        movie.actor_name = req.body.actor_name;
+        movie.char_name = req.body.char_name;
+        // save the movie
+        movie.update({title:req.body.current_title}, {$set: movie}, function(err) {
+            if (err) res.send(err);
+            res.status(200).send({msg: "updated movie"});
+        });
+
     });
 
 
