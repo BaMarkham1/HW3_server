@@ -87,9 +87,9 @@ router.route('/movies')
             if (err) {
                 // duplicate entry
                 if (err.code == 11000)
-                    return res.json({ success: false, message: 'A movie with that title already exists. '});
+                    return res.status(400).json({ success: false, message: 'A movie with that title already exists. '});
                 else
-                    return res.send(err);
+                    return res.status(400).send(err);
             }
 
             res.json({ success: true, message: 'Movie created!' });
@@ -100,7 +100,7 @@ router.route('/movies')
         if (req.body.title) {
             movieNew.title = req.body.title;
             Movie.findOne({title: movieNew.title}).select('title year genre actor_name char_name').exec(function (err, movie) {
-                if (err) res.status(400).send(err);
+                if (err) res.send(err);
                 res.status(200).send({msg: "GET movie", movie: movie});
             });
         }
