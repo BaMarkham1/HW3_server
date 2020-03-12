@@ -11,7 +11,7 @@ var app = express();
 module.exports = app; // for testing
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cors())
+app.use(cors());
 
 app.use(passport.initialize());
 
@@ -100,7 +100,7 @@ router.route('/movies')
         if (req.body.title) {
             movieNew.title = req.body.title;
             Movie.findOne({title: movieNew.title}).select('title year genre actor_name char_name').exec(function (err, movie) {
-                if (err) res.send(err);
+                if (err) res.status(400).send(err);
                 res.status(200).send({msg: "GET movie", movie: movie});
             });
         }
