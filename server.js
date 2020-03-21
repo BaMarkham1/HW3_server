@@ -80,10 +80,10 @@ router.route('/reviews')
         //create review schema
         var review = new Review();
         //get the information provided
-        review.movie = req.movie;
-        review.name = req.name;
-        review.quote = req.quote;
-        review.rating = req.rating;
+        review.movie = req.body.movie;
+        review.name = req.body.name;
+        review.quote = req.body.quote;
+        review.rating = req.body.rating;
         //save the review
         review.save(function(err) {
             if (err) {
