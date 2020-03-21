@@ -11,7 +11,7 @@ var ReviewSchema = new Schema({
     movie: { type: String, required: true },
     name: { type: String, required: true },
     quote: { type: String, required: true },
-    rating: { type: Number, required: true, minimum: 0, maximum: 5}
+    rating: { type: Number, required: true, min: 0, max: 5}
 });
 
 // return the model
