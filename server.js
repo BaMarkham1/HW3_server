@@ -4,6 +4,7 @@ var passport = require('passport');
 var authJwtController = require('./auth_jwt');
 var User = require('./Users');
 var Movie = require('./Movies');
+var Review = require('./Reviews');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 
@@ -73,6 +74,29 @@ router.post('/signup', function(req, res) {
         });
     }
 });
+
+router.route('/reviews')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+        //create review schema
+        var review = new Review();
+        //get the information provided
+        review.movie = req.movie;
+        review.name = req.name;
+        review.quote = req.quote;
+        review.rating = req.rating;
+        //save the review
+        review.save(function(err) {
+            if (err) {
+                return res.status(400).send(err);
+            }
+            res.json({ success: true, message: 'Review created!' });
+        });
+    });
+    //.get(authJwtController.isAuthenticated, function (req, res) {
+
+    //});
+
+
 
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
@@ -161,6 +185,8 @@ router.post('/signin', function(req, res) {
 
     });
 });
+
+
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
