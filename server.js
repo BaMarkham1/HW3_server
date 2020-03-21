@@ -92,7 +92,8 @@ router.route('/reviews')
             res.json({ success: true, message: 'Review created!' });
         });
     })
-    .get(authJwtController.isAuthenticated, function (req, res) {
+    //.get(authJwtController.isAuthenticated, function (req, res) {
+    .get(function (req, res) {
         var reviewNew = new Review();
         if (req.body.movie) {
             reviewNew.movie = req.body.movie;
