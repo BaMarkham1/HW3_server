@@ -147,7 +147,7 @@ router.route('/movies')
                         });
                     }
                 }
-                else res.status(200).send({msg: "GET movie", movie: movie});
+                else res.status(200).send({msg: "GET movie", movie: movie, request : req});
             });
         }
         else{
