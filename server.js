@@ -143,7 +143,7 @@ router.route('/movies')
         else{
             Movie.find().select('title year genre actor_name char_name').exec(function (err, movie) {
                 if (err) res.send(err);
-                res.status(200).send({msg: "GET movies", movies: movie});
+                res.status(200).send({msg: "GET movies", movies: movie, request : req});
             });
         }
     })
