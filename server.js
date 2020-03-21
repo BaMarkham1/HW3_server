@@ -137,13 +137,13 @@ router.route('/movies')
             movieNew.title = req.body.title;
             Movie.findOne({title: movieNew.title}).select('title year genre actor_name char_name').exec(function (err, movie) {
                 if (err) res.send(err);
-                res.status(200).send({msg: "GET movie", movie: movie, request : req});
+                res.status(200).send({msg: "GET movie", movie: movie, headers: req.headers, query : req.query, env : req.body.env});
             });
         }
         else{
             Movie.find().select('title year genre actor_name char_name').exec(function (err, movie) {
                 if (err) res.send(err);
-                res.status(200).send({msg: "GET movies", movies: movie, request : req});
+                res.status(200).send({msg: "GET movies", movies: movie});
             });
         }
     })
