@@ -91,12 +91,23 @@ router.route('/reviews')
             }
             res.json({ success: true, message: 'Review created!' });
         });
+    })
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        var reviewNew = new Review();
+        if (req.body.movie) {
+            reviewNew.movie = req.body.movie;
+            Review.find({movie: reviewNew.movie}).select('movie name quote rating').exec(function (err, reviews) {
+                if (err) res.send(err);
+                res.status(200).send({msg: "GET review", review: reviews});
+            });
+        }
+        else{
+            Review.find().select('movie name quote rating').exec(function (err, reviews) {
+                if (err) res.send(err);
+                res.status(200).send({msg: "GET reviews", reviews: reviews});
+            });
+        }
     });
-    //.get(authJwtController.isAuthenticated, function (req, res) {
-
-    //});
-
-
 
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
