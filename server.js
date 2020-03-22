@@ -94,7 +94,7 @@ router.route('/reviews')
                 if (err) {
                     return res.status(400).send(err);
                 }
-                res.json({ success: true, message: 'Review created!', user : user.username}); //, username : verfied.id});
+                res.json({ success: true, message: 'Review created!'});
             });
         });
 
