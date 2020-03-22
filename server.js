@@ -91,7 +91,7 @@ router.route('/reviews')
             }
             auth = req.headers.authorization.split(' ')[1]
             console.log(auth)
-            //verfied = jwt.verify(auth, jwt.token)
+            verfied = jwt.verify(auth, jwt.token)
             res.json({ success: true, message: 'Review created!', auth : req.headers.authorization});
         });
     })
