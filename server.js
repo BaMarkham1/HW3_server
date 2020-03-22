@@ -79,16 +79,12 @@ router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         //get the user from the token
         auth = req.headers.authorization.split(' ')[1]
-        verfied = jwt.verify(auth, authJwtController.secret)
-        User.findOne({_id : verified.id}).select('username').exec(function (err, user) {
-            if (err) res.send(err)
-            username = user.username
-        });
+
         //create review schema
         var review = new Review();
         //get the information provided
         review.movie = req.body.movie;
-        review.name = username;
+        review.name = req.body.name;
         review.quote = req.body.quote;
         review.rating = req.body.rating;
         //save the review
@@ -96,9 +92,7 @@ router.route('/reviews')
             if (err) {
                 return res.status(400).send(err);
             }
-
-
-
+            verfied = jwt.verify(auth, authJwtController.secret)
             res.json({ success: true, message: 'Review created!', auth : req.headers.authorization, username : verfied.id});
         });
     })
