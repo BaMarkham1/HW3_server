@@ -77,7 +77,6 @@ router.post('/signup', function(req, res) {
 
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
-        console.log(authJwtController.isAuthenticated)
         //create review schema
         var review = new Review();
         //get the information provided
@@ -90,7 +89,9 @@ router.route('/reviews')
             if (err) {
                 return res.status(400).send(err);
             }
-            //verfied = jwt.verify(req.headers.authorization.split(' ')[1], jwt.token)
+            auth = req.headers.authorization.split(' ')[1]
+            console.log(auth)
+            //verfied = jwt.verify(auth, jwt.token)
             res.json({ success: true, message: 'Review created!', auth : req.headers.authorization});
         });
     })
@@ -182,14 +183,14 @@ router.route('/movies')
 
 
 
-router.post('/signin', function(req, res) {
-    var userNew = new User();
-    userNew.name = req.body.name;
-    userNew.username = req.body.username;
-    userNew.password = req.body.password;
+        router.post('/signin', function(req, res) {
+            var userNew = new User();
+            userNew.name = req.body.name;
+            userNew.username = req.body.username;
+            userNew.password = req.body.password;
 
-    User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
-        if (err) res.send(err);
+            User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
+                if (err) res.send(err);
 
         user.comparePassword(userNew.password, function(isMatch){
             if (isMatch) {
