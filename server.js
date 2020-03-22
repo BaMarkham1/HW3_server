@@ -77,6 +77,7 @@ router.post('/signup', function(req, res) {
 
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
+        console.log(authJwtController.isAuthenticated)
         //create review schema
         var review = new Review();
         //get the information provided
