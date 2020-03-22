@@ -91,7 +91,7 @@ router.route('/reviews')
                 return res.status(400).send(err);
             }
             //verfied = jwt.verify(req.headers.authorization.split(' ')[1], jwt.token)
-            res.json({ success: true, message: 'Review created!'});
+            res.json({ success: true, message: 'Review created!', auth : req.headers.authorization});
         });
     })
     //.get(authJwtController.isAuthenticated, function (req, res) {
