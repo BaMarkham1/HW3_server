@@ -80,7 +80,7 @@ router.route('/reviews')
         //get the user from the token
         auth = req.headers.authorization.split(' ')[1]
         verified = jwt.verify(auth, authJwtController.secret)
-        User.findOne({_id : verified.id}).select(username).exec(function(err, user) {
+        User.findOne({_id : verified.id}).select('username').exec(function(err, user) {
             if (err) res.send(err);
             //create review schema
             var review = new Review();
