@@ -79,12 +79,16 @@ router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         //get the user from the token
         auth = req.headers.authorization.split(' ')[1]
-        verfied = jwt.verify(auth, authJwtController.secret)
+        verified = jwt.verify(auth, authJwtController.secret)
+        User.findOne({_id : verified.id}).select(username).exec(function(err, user) {
+            if (err) res.send(err);
+            username = user.username
+        });
         //create review schema
         var review = new Review();
         //get the information provided
         review.movie = req.body.movie;
-        review.name = req.body.name;
+        review.name = username;
         review.quote = req.body.quote;
         review.rating = req.body.rating;
         //save the review
