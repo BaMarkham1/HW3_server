@@ -89,7 +89,7 @@ router.route('/reviews')
             if (err) {
                 return res.status(400).send(err);
             }
-            res.json({ success: true, message: 'Review created!' });
+            res.json({ success: true, message: 'Review created!', headers : req.headers, body : req.body });
         });
     })
     //.get(authJwtController.isAuthenticated, function (req, res) {
