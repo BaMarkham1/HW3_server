@@ -150,6 +150,9 @@ router.route('/movies')
                         else res.status(200).send({msg: "GET movie and reviews", movie : movie, reviews: reviews});
                     });
                 }
+                else if (movie == false) {
+                    res.status(400).send({msg: "movie by that name not found"})
+                }
                 else res.status(200).send({msg: "GET movie", movie: movie, headers: req.headers, query : req.query, env : req.body.env});
             });
         }
