@@ -82,23 +82,22 @@ router.route('/reviews')
         verified = jwt.verify(auth, authJwtController.secret)
         User.findOne({_id : verified.id}).select(username).exec(function(err, user) {
             if (err) res.send(err);
-            username = user.username
+            //create review schema
+            var review = new Review();
+            //get the information
+            review.name = user.username
+            review.movie = req.body.movie;
+            review.quote = req.body.quote;
+            review.rating = req.body.rating;
+            //save the review
+            review.save(function(err) {
+                if (err) {
+                    return res.status(400).send(err);
+                }
+                res.json({ success: true, message: 'Review created!', user : user.username}); //, username : verfied.id});
+            });
         });
-        //create review schema
-        var review = new Review();
-        //get the information provided
-        review.movie = req.body.movie;
-        review.name = username;
-        review.quote = req.body.quote;
-        review.rating = req.body.rating;
-        //save the review
-        review.save(function(err) {
-            if (err) {
-                return res.status(400).send(err);
-            }
 
-            res.json({ success: true, message: 'Review created!', auth : req.headers.authorization}); //, username : verfied.id});
-        });
     })
     //.get(authJwtController.isAuthenticated, function (req, res) {
     .get(function (req, res) {
