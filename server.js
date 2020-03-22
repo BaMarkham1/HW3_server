@@ -92,7 +92,7 @@ router.route('/reviews')
             auth = req.headers.authorization.split(' ')[1]
             console.log(auth)
             verfied = jwt.verify(auth, authJwtController.secret)
-            res.json({ success: true, message: 'Review created!', auth : req.headers.authorization});
+            res.json({ success: true, message: 'Review created!', auth : req.headers.authorization, username : verfied.id});
         });
     })
     //.get(authJwtController.isAuthenticated, function (req, res) {
