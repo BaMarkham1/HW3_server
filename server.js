@@ -140,8 +140,8 @@ router.route('/movies')
                 if (req.query.reviews && req.query.reviews === "true"){
                     Review.find({movie: movieNew.title}).select('movie name quote rating').exec(function (err, reviews) {
                         if (err) res.send(err);
-                    }
-                    res.status(200).send({msg: "GET movie and reviews", movie : movie, reviews: reviews});
+                        else res.status(200).send({msg: "GET movie and reviews", movie : movie, reviews: reviews});
+                    });
                 }
                 else res.status(200).send({msg: "GET movie", movie: movie, headers: req.headers, query : req.query, env : req.body.env});
             });
