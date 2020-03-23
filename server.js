@@ -77,27 +77,33 @@ router.post('/signup', function(req, res) {
 
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
-        //get the user from the token
-        auth = req.headers.authorization.split(' ')[1]
-        verified = jwt.verify(auth, authJwtController.secret)
-        User.findOne({_id : verified.id}).select('username').exec(function(err, user) {
+        //check if movie exists, if not can't post review for it
+        Movie.findOne({title: movieNew.title}).select('title year genre actor_name char_name').exec(function (err, movie) {
             if (err) res.send(err);
-            //create review schema
-            var review = new Review();
-            //get the information
-            review.name = user.username
-            review.movie = req.body.movie;
-            review.quote = req.body.quote;
-            review.rating = req.body.rating;
-            //save the review
-            review.save(function(err) {
-                if (err) {
-                    return res.status(400).send(err);
-                }
-                res.json({ success: true, message: 'Review created!'});
+            else if (movie == null) {
+                res.status(400).send({msg: "movie by that name not found"})
+            }
+            //get the user from the token
+            auth = req.headers.authorization.split(' ')[1]
+            verified = jwt.verify(auth, authJwtController.secret)
+            User.findOne({_id : verified.id}).select('username').exec(function(err, user) {
+                if (err) res.send(err);
+                //create review schema
+                var review = new Review();
+                //get the information
+                review.name = user.username
+                review.movie = req.body.movie;
+                review.quote = req.body.quote;
+                review.rating = req.body.rating;
+                //save the review
+                review.save(function(err) {
+                    if (err) {
+                        return res.status(400).send(err);
+                    }
+                    res.json({ success: true, message: 'Review created!'});
+                });
             });
         });
-
     })
     //.get(authJwtController.isAuthenticated, function (req, res) {
     .get(function (req, res) {
