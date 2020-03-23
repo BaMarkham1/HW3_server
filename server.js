@@ -78,7 +78,7 @@ router.post('/signup', function(req, res) {
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         //check if movie exists, if not can't post review for it
-        Movie.findOne({title: movieNew.title}).select('title year genre actor_name char_name').exec(function (err, movie) {
+        Movie.findOne({title: req.body.movie}).select('*').exec(function (err, movie) {
             if (err) res.send(err);
             else if (movie == null) {
                 res.status(400).send({msg: "movie by that name not found"})
