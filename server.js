@@ -3,6 +3,7 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var authJwtController = require('./auth_jwt');
 var User = require('./Users');
+var Insult = require('./Insults');
 var Movie = require('./Movies');
 var Review = require('./Reviews');
 var jwt = require('jsonwebtoken');
@@ -74,6 +75,35 @@ router.post('/signup', function(req, res) {
         });
     }
 });
+
+router.route('/insults')
+    //.get(authJwtController.isAuthenticated, function (req, res) {
+    .get(function (req, res) {
+        //Insult.find().select('insult category').exec(function (err, insults) {
+        if (err) res.send(err);
+        res.status(200).send({msg: "GET insults", movies: insults});
+        //})
+    })
+    //.post(authJwtController.isAuthenticated, function (req, res) {
+    .post(function (req, res) {
+        console.log("called post function");
+        var insult = new Insult();
+        insult.insult = req.body.insult;
+        insult.category = req.body.category;
+        //res.json({ success : true, message : "insult created!"})
+        // save the movie
+        insult.save(function(err) {
+            if (err) {
+                // duplicate entry
+                console.log("called save function");
+                if (err.code == 11000)
+                    return res.status(400).json({ success: false, message: 'That exact insult already exists'});
+                else
+                    return res.status(400).send(err);
+            }
+            res.json({ success: true, message: 'Insult created!' });
+        });
+    });
 
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
