@@ -79,10 +79,10 @@ router.post('/signup', function(req, res) {
 router.route('/insults')
     //.get(authJwtController.isAuthenticated, function (req, res) {
     .get(function (req, res) {
-        //Insult.find().select('insult category').exec(function (err, insults) {
-        if (err) res.send(err);
-        res.status(200).send({msg: "GET insults", movies: insults});
-        //})
+        Insult.find().select('insult category').exec(function (err, insults) {
+            if (err) res.send(err);
+            res.status(200).send({msg: "GET insults", insults: insults});
+        })
     })
     //.post(authJwtController.isAuthenticated, function (req, res) {
     .post(function (req, res) {
