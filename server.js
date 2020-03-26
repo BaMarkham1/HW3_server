@@ -81,7 +81,7 @@ router.route('/insults')
     .get(function (req, res) {
         Insult.find().select('insult category').exec(function (err, insults) {
             if (err) res.send(err);
-            res.status(200).send({msg: "GET insults", insults: insults});
+            res.status(200).send({msg: "GET insults", movies: insults});
         })
     })
     //.post(authJwtController.isAuthenticated, function (req, res) {
@@ -234,21 +234,22 @@ router.route('/movies')
 
             User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
                 if (err) res.send(err);
-
-        user.comparePassword(userNew.password, function(isMatch){
-            if (isMatch) {
-                var userToken = {id: user._id, username: user.username};
-                var token = jwt.sign(userToken, process.env.SECRET_KEY);
-                res.json({success: true, token: 'JWT ' + token});
-            }
-            else {
-                res.status(401).send({success: false, message: 'Authentication failed.'});
-            }
+                if (user){
+                    user.comparePassword(userNew.password, function(isMatch){
+                        if (isMatch) {
+                            var userToken = {id: user._id, username: user.username};
+                            var token = jwt.sign(userToken, process.env.SECRET_KEY);
+                            res.json({success: true, token: 'JWT ' + token});
+                        }
+                        else {
+                            res.status(401).send({success: false, message: 'password incorrect.'});
+                        }
+                    });
+                }
+                else
+                    res.status(401).send({success: false, message: 'username not found.'})
+            });
         });
-
-
-    });
-});
 
 
 
