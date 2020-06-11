@@ -6,7 +6,8 @@ var User = require('./Users');
 
 var opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme("jwt");
-opts.secretOrKey = process.env.SECRET_KEY;
+//opts.secretOrKey = process.env.SECRET_KEY;
+opts.secretOrKey = "ADL;ASALK;DAKLJKL";
 
 passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
     User.findById(jwt_payload.id, function (err, user) {

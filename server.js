@@ -3,11 +3,11 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var authJwtController = require('./auth_jwt');
 var User = require('./Users');
-var Insult = require('./Insults');
 var Movie = require('./Movies');
 var Review = require('./Reviews');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
+var mongoose = require('mongoose');
 
 var app = express();
 module.exports = app; // for testing
@@ -76,55 +76,106 @@ router.post('/signup', function(req, res) {
     }
 });
 
-router.route('/insults')
-    //.get(authJwtController.isAuthenticated, function (req, res) {
-    .get(function (req, res) {
-        Insult.find().select('insult category').exec(function (err, insults) {
-            if (err) res.send(err);
-            res.status(200).send({msg: "GET insults", movies: insults});
-        })
+function getReviewIndexes(movieTitle, reviews) {
+    matchingIndexes = reviews.map((review, i) => ( (movieTitle.valueOf() == review.movie.valueOf()) ? i : false)).filter((review) => (review));
+    return matchingIndexes
+}
+
+function updateDB(movie) {
+    Movie.updateOne({title:movie.title}, {$set: movie}, function(err) {
+        //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
+        if (err){
+            res.send(err);
+        }
+        else {
+            console.log("updated movie");
+        }
     })
-    //.post(authJwtController.isAuthenticated, function (req, res) {
-    .post(function (req, res) {
-        console.log("called post function");
-        var insult = new Insult();
-        insult.insult = req.body.insult;
-        insult.category = req.body.category;
-        //res.json({ success : true, message : "insult created!"})
-        // save the movie
-        insult.save(function(err) {
-            if (err) {
-                // duplicate entry
-                console.log("called save function");
-                if (err.code == 11000)
-                    return res.status(400).json({ success: false, message: 'That exact insult already exists'});
-                else
-                    return res.status(400).send(err);
+}
+
+function updateMovie(movie, reviews) {
+    newReviews = []
+    indexes = getReviewIndexes(movie.title, reviews);
+    indexes.forEach( index  =>  newReviews.push(reviews[index]._id) );
+    movie.avg_rating = getAverageRating(reviews, indexes);
+    movie.reviews = newReviews;
+    updateDB(movie);
+    return movie
+}
+
+function getAverageRating(reviews, indexes){
+    if (indexes.length == 0) return 0;
+    sum = 0;
+    indexes.forEach(index => {
+        sum = sum + reviews[index].rating;
+    });
+    return (sum / indexes.length);
+}
+
+router.route('/movies/reviews')
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        Movie.find().select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movies) {
+            if (err) res.send(err);
+                Review.find().select('_id movie name quote rating').exec( (err, reviews) => {
+                    if (err) res.send(err);
+                    updatedMovies = movies.map( (movie) =>  updateMovie(movie, reviews));
+                    res.status(200).send({msg: "update stuff", movies: updatedMovies });
+                    });
+                     //, reviews: reviews});
+                });
+            });
+
+function updateAverage(movie, newRating) {
+        return ( ((movie.avg_rating * movie.reviews.length) + newRating) / (movie.reviews.length + 1) )
+}
+
+router.route('/reviews/:review_id')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        let review_id = mongoose.Types.ObjectId(req.params.review_id);
+        Review.findOne({_id : review_id}).select('movie name quote rating').exec(function(err, review) {
+            if (err) res.send(err);
+            res.json({ success: true, review: review});
+        });
+    });
+
+router.route('/movies/:movie_id')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        let review_id = mongoose.Types.ObjectId(req.params.movie_id);
+        Movie.findOne({_id: review_id}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
+            if (err) res.send(err);
+            else if (movie == null) {
+                res.status(400).send({msg: "movie by that name not found"})
             }
-            res.json({ success: true, message: 'Insult created!' });
+            res.status(200).send({msg: "GET movie", movie: movie});  //, headers: req.headers, query : req.query, env : req.body.env});
         });
     });
 
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         //check if movie exists, if not can't post review for it
-        Movie.findOne({title: req.body.movie}).select('*').exec(function (err, movie) {
+        Movie.findOne({title: req.body.movie}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
             if (err) res.send(err);
             else if (movie == null) {
                 res.status(400).send({msg: "movie by that name not found"})
             }
             //get the user from the token
-            auth = req.headers.authorization.split(' ')[1]
-            verified = jwt.verify(auth, authJwtController.secret)
+            auth = req.headers.authorization.split(' ')[1];
+            verified = jwt.verify(auth, authJwtController.secret);
             User.findOne({_id : verified.id}).select('username').exec(function(err, user) {
                 if (err) res.send(err);
-                //create review schema
+
+                //create review document
                 var review = new Review();
                 //get the information
-                review.name = user.username
+                review._id = mongoose.Types.ObjectId();
+                review.name = user.username;
                 review.movie = req.body.movie;
                 review.quote = req.body.quote;
                 review.rating = req.body.rating;
+                //update movie with new review
+                movie.avg_rating = updateAverage(movie, review.rating);
+                movie.reviews.push(review._id);
+                updateDB(movie);
                 //save the review
                 review.save(function(err) {
                     if (err) {
@@ -135,7 +186,6 @@ router.route('/reviews')
             });
         });
     })
-    //.get(authJwtController.isAuthenticated, function (req, res) {
     .get(function (req, res) {
         var reviewNew = new Review();
         if (req.body.movie) {
@@ -161,6 +211,7 @@ router.route('/movies')
         movie.genre = req.body.genre;
         movie.actor_name = req.body.actor_name;
         movie.char_name = req.body.char_name;
+        movie.image_url = req.body.image_url
         // save the movie
         movie.save(function(err) {
             if (err) {
@@ -176,28 +227,14 @@ router.route('/movies')
     })
     .get(authJwtController.isAuthenticated, function (req, res) {
         var movieNew = new Movie();
-        if (req.body.title) {
-            movieNew.title = req.body.title;
-            Movie.findOne({title: movieNew.title}).select('title year genre actor_name char_name').exec(function (err, movie) {
-                if (err) res.send(err);
-                else if (movie == null) {
-                    res.status(400).send({msg: "movie by that name not found"})
-                }
-                else if (req.query.reviews && req.query.reviews === "true"){
-                    Review.find({movie: movieNew.title}).select('movie name quote rating').exec(function (err, reviews) {
-                        if (err) res.send(err);
-                        else res.status(200).send({msg: "GET movie and reviews", movie : movie, reviews: reviews});
-                    });
-                }
-                else res.status(200).send({msg: "GET movie", movie: movie});  //, headers: req.headers, query : req.query, env : req.body.env});
+        Movie.find().select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movies) {
+            if (err) res.send(err);
+            movies.sort(function(a, b) {
+                return parseFloat(b.avg_rating) - parseFloat(a.avg_rating);
             });
-        }
-        else{
-            Movie.find().select('title year genre actor_name char_name').exec(function (err, movie) {
-                if (err) res.send(err);
-                res.status(200).send({msg: "GET movies", movies: movie});
-            });
-        }
+
+            res.status(200).send({msg: "GET movies", movies: movies});
+        });
     })
     .put(authJwtController.isAuthenticated, function (req, res) {
         var movie = {};
@@ -206,6 +243,7 @@ router.route('/movies')
         movie.genre = req.body.genre;
         movie.actor_name = req.body.actor_name;
         movie.char_name = req.body.char_name;
+        movie.image_url = req.body.image_url;
         //save the movie
         Movie.updateOne({title:req.body.current_title}, {$set: movie}, function(err) {
         //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
@@ -250,8 +288,6 @@ router.route('/movies')
                     res.status(401).send({success: false, message: 'username not found.'})
             });
         });
-
-
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);

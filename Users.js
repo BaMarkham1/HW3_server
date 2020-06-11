@@ -5,7 +5,8 @@ var bcrypt = require('bcrypt-nodejs');
 mongoose.Promise = global.Promise;
 
 //put in environment file (or variable on heroku)
-mongoose.connect(process.env.DB, { useNewUrlParser: true } );
+//mongoose.connect(process.env.DB, { useNewUrlParser: true } );
+mongoose.connect("mongodb+srv://bendb:bendb@cluster0-gvkpo.mongodb.net/test?retryWrites=true&w=majority", { useNewUrlParser: true } );
 mongoose.set('useCreateIndex', true);
 
 // user schema

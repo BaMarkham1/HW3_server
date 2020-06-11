@@ -5,7 +5,10 @@ var Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;
 
 //put in environment file (or variable on heroku)
-mongoose.connect(process.env.DB, { useNewUrlParser: true } );
+//console.log(process.env.DB);
+console.log();
+//mongoose.connect(process.env.DB, { useNewUrlParser: true } );
+mongoose.connect("mongodb+srv://bendb:bendb@cluster0-gvkpo.mongodb.net/test?retryWrites=true&w=majority", { useNewUrlParser: true } );
 mongoose.set('useCreateIndex', true);
 
 // user schema
@@ -21,8 +24,10 @@ var MovieSchema = new Schema({
     year: { type: Number, required: true },
     genre: { type: String, required: true },
     actor_name: { type: Array, required: true, minItems: 3, items: String },
-    char_name: { type: Array, required: true, minItems: 3, items: String }
-
+    char_name: { type: Array, required: true, minItems: 3, items: String },
+    image_url: { type: String, required: false },
+    avg_rating: {type : Number, required: false},
+    reviews: { type: Array, required: false}
 });
 
 // return the model
