@@ -266,7 +266,8 @@ router.route('/movies')
             movies.sort(function(a, b) {
                 return parseFloat(b.avg_rating) - parseFloat(a.avg_rating);
             });
-
+            console.log("sending request");
+            console.log(movies)
             res.status(200).send({msg: "GET movies", movies: movies});
         });
     })
