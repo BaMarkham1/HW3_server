@@ -146,6 +146,14 @@ router.route('/movies/:movie_id')
             else if (movie == null) {
                 res.status(400).send({msg: "movie by that name not found"})
             }
+            /*
+            else if (req.query.reviews === "true"){
+                Review.find({movie_id: req.params.movie_id}).select('movie name quote rating').exec(function (err, reviews) {
+                    if (err) res.send(err);
+                    else res.status(200).send({msg: "GET movie and reviews", movie: movie, reviews: reviews});
+                });
+            };
+             */
             res.status(200).send({msg: "GET movie", movie: movie});  //, headers: req.headers, query : req.query, env : req.body.env});
         });
     });
@@ -201,7 +209,33 @@ router.route('/reviews')
                 res.status(200).send({msg: "GET reviews", reviews: reviews});
             });
         }
+    })
+    .put(function (req, res) {
+        Movie.find().select('_id reviews').exec(function (err, movies) {
+            if (err) res.send(err);
+            movies.forEach((movie) => updateReviews(movie._id, movie.reviews));
+        })
     });
+
+function updateReviews(movie_id, reviews) {
+    reviews.forEach((review) => updateReview(movie_id, review))
+    }
+
+function updateReview(movie_id, review_id) {
+    //Review.findOne({ _id: review_id }).select('_id movie_id movie name quote rating').exec(function(err, review) {
+        //review.movie_id = movie_id;
+        Review.updateOne({_id: review_id}, {$set: { movie_id : movie_id }}, function (err) {
+            //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
+            if (err) {
+                res.send(err);
+            } else {
+                console.log("updated review");
+                console.log(review_id);
+                console.log(movie_id);
+            }
+        })
+    //})
+}
 
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
