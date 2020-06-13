@@ -141,20 +141,23 @@ router.route('/reviews/:review_id')
 router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         let review_id = mongoose.Types.ObjectId(req.params.movie_id);
-        Movie.findOne({_id: review_id}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
+        Movie.findOne({_id: review_id}).select('title year genre actors image_url reviews avg_rating').exec(function (err, movie) {
             if (err) res.send(err);
             else if (movie == null) {
                 res.status(400).send({msg: "movie by that name not found"})
             }
-            /*
-            else if (req.query.reviews === "true"){
+            else if (req.query.reviews && req.query.reviews === "true"){
+                console.log("reviews equals true")
                 Review.find({movie_id: req.params.movie_id}).select('movie name quote rating').exec(function (err, reviews) {
                     if (err) res.send(err);
-                    else res.status(200).send({msg: "GET movie and reviews", movie: movie, reviews: reviews});
+                    console.log("made DB call")
+                    movie.reviews = reviews;
+                    console.log("set reviews")
+                    res.status(200).send({msg: "GET movie and reviews", movie: movie});
                 });
-            };
-             */
-            res.status(200).send({msg: "GET movie", movie: movie});  //, headers: req.headers, query : req.query, env : req.body.env});
+            }
+            else res.status(200).send({msg: "GET movie", movie: movie});
+             //, headers: req.headers, query : req.query, env : req.body.env});
         });
     });
 
