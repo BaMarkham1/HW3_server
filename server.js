@@ -321,16 +321,16 @@ router.route('/movies')
     })
 
 function getReviews(movie, reviews){
-    indexes = getReviewIndexes(movie.title, reviews)
+    indexes = getReviewIndexes(movie._id, reviews)
     newReviews = []
     indexes.forEach( index  =>  newReviews.push(reviews[index]) );
     movie.reviews = newReviews;
     return movie;
 }
 
-function getReviewIndexes(movieTitle, reviews) {
-    console.log(movieTitle);
-    return reviews.map((review, i) => ( (movieTitle.valueOf() == review.movie.valueOf()) ? i : false)).filter((review) => (review));
+function getReviewIndexes(movieId, reviews) {
+    console.log(movieId);
+    return reviews.map((review, i) => ( (movieId.equals(review.movie_id) ) ? i : false)).filter((review) => (review));
 }
 
         router.post('/signin', function(req, res) {
