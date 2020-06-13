@@ -19,6 +19,8 @@ mongoose.set('useCreateIndex', true);
     //ActorName
     //CharacterName
 
+
+
 var MovieSchema = new Schema({
     title: { type: String, required: true, index: { unique: true }},
     year: { type: Number, required: true },
@@ -27,7 +29,8 @@ var MovieSchema = new Schema({
     char_name: { type: Array, required: true, minItems: 3, items: String },
     image_url: { type: String, required: false },
     avg_rating: {type : Number, required: false},
-    reviews: { type: Array, required: false}
+    reviews: { type: Array, required: false},
+    actors: {type: Array, required: false}
 });
 
 // return the model

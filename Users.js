@@ -9,6 +9,7 @@ mongoose.Promise = global.Promise;
 mongoose.connect("mongodb+srv://bendb:bendb@cluster0-gvkpo.mongodb.net/test?retryWrites=true&w=majority", { useNewUrlParser: true } );
 mongoose.set('useCreateIndex', true);
 
+
 // user schema
 var UserSchema = new Schema({
     name: String,

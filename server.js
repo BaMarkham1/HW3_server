@@ -237,6 +237,32 @@ function updateReview(movie_id, review_id) {
     //})
 }
 
+function updateActor(actor_name, char_name) {
+
+}
+
+function updateActors(movie) {
+    movie.actor_name.forEach( (actor, i) => movie.actors.push( { "actor_name" : actor, "char_name" : movie.char_name[i] }));
+    Movie.updateOne({_id: movie._id}, {$set: { actors : movie.actors }}, function (err) {
+        if (err) {
+            res.send(err);
+        } else {
+            console.log("updated actors");
+        }
+    })
+
+
+}
+
+//take the info in actor_name and char_name and make a new field, actors
+router.route('/movies/actors')
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        Movie.find().select('title year genre actor_name char_name image_url reviews avg_rating actors').exec(function (err, movies) {
+            movies.forEach( (movie, i) => updateActors(movie) );
+        });
+    });
+
+
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
         var movie = new Movie();
@@ -261,7 +287,7 @@ router.route('/movies')
     })
     .get(authJwtController.isAuthenticated, function (req, res) {
         var movieNew = new Movie();
-        Movie.find().select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movies) {
+        Movie.find().select('title year genre actors image_url reviews avg_rating').exec(function (err, movies) {
             if (err) res.send(err);
             movies.sort(function(a, b) {
                 return parseFloat(b.avg_rating) - parseFloat(a.avg_rating);
