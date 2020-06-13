@@ -76,11 +76,6 @@ router.post('/signup', function(req, res) {
     }
 });
 
-function getReviewIndexes(movieTitle, reviews) {
-    matchingIndexes = reviews.map((review, i) => ( (movieTitle.valueOf() == review.movie.valueOf()) ? i : false)).filter((review) => (review));
-    return matchingIndexes
-}
-
 function updateDB(movie) {
     Movie.updateOne({title:movie.title}, {$set: movie}, function(err) {
         //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
@@ -147,12 +142,9 @@ router.route('/movies/:movie_id')
                 res.status(400).send({msg: "movie by that name not found"})
             }
             else if (req.query.reviews && req.query.reviews === "true"){
-                console.log("reviews equals true")
                 Review.find({movie_id: req.params.movie_id}).select('movie name quote rating').exec(function (err, reviews) {
                     if (err) res.send(err);
-                    console.log("made DB call")
                     movie.reviews = reviews;
-                    console.log("set reviews")
                     res.status(200).send({msg: "GET movie and reviews", movie: movie});
                 });
             }
@@ -240,10 +232,6 @@ function updateReview(movie_id, review_id) {
     //})
 }
 
-function updateActor(actor_name, char_name) {
-
-}
-
 function updateActors(movie) {
     movie.actor_name.forEach( (actor, i) => movie.actors.push( { "actor_name" : actor, "char_name" : movie.char_name[i] }));
     Movie.updateOne({_id: movie._id}, {$set: { actors : movie.actors }}, function (err) {
@@ -288,18 +276,6 @@ router.route('/movies')
             res.json({ success: true, message: 'Movie created!' });
         });
     })
-    .get(authJwtController.isAuthenticated, function (req, res) {
-        var movieNew = new Movie();
-        Movie.find().select('title year genre actors image_url reviews avg_rating').exec(function (err, movies) {
-            if (err) res.send(err);
-            movies.sort(function(a, b) {
-                return parseFloat(b.avg_rating) - parseFloat(a.avg_rating);
-            });
-            console.log("sending request");
-            console.log(movies)
-            res.status(200).send({msg: "GET movies", movies: movies});
-        });
-    })
     .put(authJwtController.isAuthenticated, function (req, res) {
         var movie = {};
         movie.title = req.body.title;
@@ -324,9 +300,38 @@ router.route('/movies')
             if (err) throw err;
             res.status(200).send({msg: "deleted movie"});
         })
-    });
+    })
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        var movieNew = new Movie();
+        Movie.find().select('_id title year genre actors image_url reviews avg_rating').exec(function (err, movies) {
+            if (err) res.send(err);
+            movies.sort(function(a, b) {
+                return parseFloat(b.avg_rating) - parseFloat(a.avg_rating);
+            });
+            if (req.query.reviews && req.query.reviews === "true"){
+                Review.find().select('_id movie movie_id name quote rating').exec(function (err, reviews) {
+                    if (err) res.send(err);
+                    //res.status(200).send({msg: "test", reviews: reviews})
+                    newMovies = movies.map( movie  =>  getReviews(movie, reviews) )
+                    res.status(200).send({msg: "GET movies and reviews", movies: newMovies})
+                })
+            }
+            else res.status(200).send({msg: "GET movies", movies: movies});
+        });
+    })
 
+function getReviews(movie, reviews){
+    indexes = getReviewIndexes(movie.title, reviews)
+    newReviews = []
+    indexes.forEach( index  =>  newReviews.push(reviews[index]) );
+    movie.reviews = newReviews;
+    return movie;
+}
 
+function getReviewIndexes(movieTitle, reviews) {
+    console.log(movieTitle);
+    return reviews.map((review, i) => ( (movieTitle.valueOf() == review.movie.valueOf()) ? i : false)).filter((review) => (review));
+}
 
         router.post('/signin', function(req, res) {
             var userNew = new User();
