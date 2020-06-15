@@ -159,6 +159,7 @@ router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         //check if movie exists, if not can't post review for it
         Movie.findOne({_id: req.body.movie_id}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
+            console.log("finding movie");
             if (err) res.send(err);
             else if (movie == null) {
                 res.status(400).send({msg: "movie with that id not found"})
@@ -167,8 +168,8 @@ router.route('/reviews')
             auth = req.headers.authorization.split(' ')[1];
             verified = jwt.verify(auth, authJwtController.secret);
             User.findOne({_id : verified.id}).select('username').exec(function(err, user) {
+                console.log("getting user");
                 if (err) res.send(err);
-
                 //create review document
                 var review = new Review();
                 //get the information
@@ -186,6 +187,7 @@ router.route('/reviews')
                     if (err) {
                         return res.status(400).send(err);
                     }
+                    console.log("saving review");
                     res.json({ success: true, message: 'Review created!'});
                 });
             });
