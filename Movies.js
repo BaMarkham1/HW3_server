@@ -25,12 +25,10 @@ var MovieSchema = new Schema({
     title: { type: String, required: true, index: { unique: true }},
     year: { type: Number, required: true },
     genre: { type: String, required: true },
-    actor_name: { type: Array, required: true, minItems: 3, items: String },
-    char_name: { type: Array, required: true, minItems: 3, items: String },
     image_url: { type: String, required: false },
     avg_rating: {type : Number, required: false},
     reviews: { type: Array, required: false},
-    actors: {type: Array, required: false}
+    actors: {type: Array, required: false, minItems: 3}
 });
 
 // return the model

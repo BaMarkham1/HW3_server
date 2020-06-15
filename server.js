@@ -121,6 +121,8 @@ router.route('/movies/reviews')
             });
 
 function updateAverage(movie, newRating) {
+        console.log(movie.avg_rating)
+        console.log(movie.title)
         return ( ((movie.avg_rating * movie.reviews.length) + newRating) / (movie.reviews.length + 1) )
 }
 
@@ -156,10 +158,10 @@ router.route('/movies/:movie_id')
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         //check if movie exists, if not can't post review for it
-        Movie.findOne({title: req.body.movie}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
+        Movie.findOne({_id: req.body.movie_id}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
             if (err) res.send(err);
             else if (movie == null) {
-                res.status(400).send({msg: "movie by that name not found"})
+                res.status(400).send({msg: "movie with that id not found"})
             }
             //get the user from the token
             auth = req.headers.authorization.split(' ')[1];
@@ -172,9 +174,9 @@ router.route('/reviews')
                 //get the information
                 review._id = mongoose.Types.ObjectId();
                 review.name = user.username;
-                review.movie = req.body.movie;
                 review.quote = req.body.quote;
                 review.rating = req.body.rating;
+                review.movie_id = req.body.movie_id;
                 //update movie with new review
                 movie.avg_rating = updateAverage(movie, review.rating);
                 movie.reviews.push(review._id);
@@ -260,9 +262,9 @@ router.route('/movies')
         movie.title = req.body.title;
         movie.year = req.body.year;
         movie.genre = req.body.genre;
-        movie.actor_name = req.body.actor_name;
-        movie.char_name = req.body.char_name;
-        movie.image_url = req.body.image_url
+        movie.image_url = req.body.image_url;
+        movie.actors = req.body.actors;
+        movie.avg_rating = 0;
         // save the movie
         movie.save(function(err) {
             if (err) {
