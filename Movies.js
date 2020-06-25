@@ -11,15 +11,6 @@ console.log();
 mongoose.connect("mongodb+srv://bendb:bendb@cluster0-gvkpo.mongodb.net/test?retryWrites=true&w=majority", { useNewUrlParser: true } );
 mongoose.set('useCreateIndex', true);
 
-// user schema
-//Title
-//Year released
-//Genre (Action, Adventure, Comedy, Drama, Fantasy, Horror, Mystery, Thriller, Western)
-//Array of three actors that were in the film
-    //ActorName
-    //CharacterName
-
-
 
 var MovieSchema = new Schema({
     title: { type: String, required: true, index: { unique: true }},

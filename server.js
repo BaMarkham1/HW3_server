@@ -5,6 +5,8 @@ var authJwtController = require('./auth_jwt');
 var User = require('./Users');
 var Movie = require('./Movies');
 var Review = require('./Reviews');
+var Actor = require('./Actors');
+var Role = require('./Roles');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 var mongoose = require('mongoose');
@@ -18,6 +20,49 @@ app.use(cors());
 app.use(passport.initialize());
 
 var router = express.Router();
+
+router.route('/actor')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+        var actor = new Actor();
+        actor.name = req.body.name;
+        actor.img_url = req.body.img_url;
+        actor.save(function(err) {
+            if (err) {
+                return res.status(400).json({ success: false, message: 'An error occurred'});
+            }
+            res.json({ success: true, message: 'Actor created!' });
+        });
+    });
+
+router.route('/role')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+        var role = new Role();
+        Movie.findOne({_id: req.body.movie_id}).select('_id title').exec(function (err, movie) {
+            console.log("finding movie");
+            if (err) res.send(err);
+            else if (movie == null) {
+                res.status(400).send({msg: "movie with that id not found"})
+            }
+            Actor.findOne({_id: req.body.actor_id}).select('id name').exec(function (err, actor) {
+                console.log("finding actor");
+                if (err) res.send(err);
+                else if (actor == null) {
+                    res.status(400).send({msg: "actor with that id not found"})
+                }
+                role.movie_id = req.body.movie_id;
+                role.actor_id = req.body.actor_id;
+                role.char_name = req.body.char_name;
+                role.actor_name = actor.name;
+                role.movie_name = movie.title
+                role.save(function(err) {
+                    if (err) {
+                        return res.status(400).json({ success: false, message: 'An error occurred'});
+                    }
+                    res.json({ success: true, message: 'Role created!' });
+                });
+            });
+        });
+    });
 
 router.route('/postjwt')
     .post(authJwtController.isAuthenticated, function (req, res) {
@@ -90,7 +135,9 @@ function updateDB(movie) {
 
 function updateMovie(movie, reviews) {
     newReviews = []
-    indexes = getReviewIndexes(movie.title, reviews);
+    indexes = getReviewIndexes(movie._id, reviews);
+    console.log("indexes:")
+    console.log(indexes)
     indexes.forEach( index  =>  newReviews.push(reviews[index]._id) );
     movie.avg_rating = getAverageRating(reviews, indexes);
     movie.reviews = newReviews;
@@ -107,11 +154,23 @@ function getAverageRating(reviews, indexes){
     return (sum / indexes.length);
 }
 
+function getReviewIndexes(movieId, reviews) {
+    //movieId = mongoose.Types.ObjectId(movieId);
+    console.log("movieId:");
+    console.log(movieId);
+    console.log("type of movieID");
+    console.log(typeof(movieId));
+    console.log("type of reviews' movie id");
+    reviews.forEach( (review) => console.log(typeof(review.movie_id)) );
+    //console.log(typeof(reviews[23].movie_id));
+    return reviews.map((review, i) => ( (movieId.equals(review.movie_id) ) ? i : false)).filter((review) => (review));
+}
+
 router.route('/movies/reviews')
     .put(authJwtController.isAuthenticated, function (req, res) {
         Movie.find().select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movies) {
             if (err) res.send(err);
-                Review.find().select('_id movie name quote rating').exec( (err, reviews) => {
+                Review.find().select('_id movie movie_id name quote rating').exec( (err, reviews) => {
                     if (err) res.send(err);
                     updatedMovies = movies.map( (movie) =>  updateMovie(movie, reviews));
                     res.status(200).send({msg: "update stuff", movies: updatedMovies });
@@ -137,26 +196,24 @@ router.route('/reviews/:review_id')
 
 router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
-        let review_id = mongoose.Types.ObjectId(req.params.movie_id);
-        Movie.findOne({_id: review_id}).select('title year genre actors image_url reviews avg_rating').exec(function (err, movie) {
+        let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
+        Movie.findOne({_id: movie_id}).select('title year genre actors image_url reviews avg_rating').exec(function (err, movie) {
             if (err) res.send(err);
-            else if (movie == null) {
-                res.status(400).send({msg: "movie by that name not found"})
-            }
-            else if (req.query.reviews && req.query.reviews === "true"){
-                Review.find({movie_id: req.params.movie_id}).select('movie name quote rating').exec(function (err, reviews) {
+            else if (movie == null) res.status(400).send({msg: "movie by that name not found"})
+            Role.find({movie_id: req.params.movie_id}).select('actor_name char_name').exec(function (err, roles) {
+                movie.roles = roles;
+                Review.find({movie_id: req.params.movie_id}).select('_id movie name quote rating').exec(function (err, reviews) {
                     if (err) res.send(err);
                     movie.reviews = reviews;
                     res.status(200).send({msg: "GET movie and reviews", movie: movie});
                 });
-            }
-            else res.status(200).send({msg: "GET movie", movie: movie});
-             //, headers: req.headers, query : req.query, env : req.body.env});
+            });
         });
     });
 
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
+        console.log(req)
         //check if movie exists, if not can't post review for it
         Movie.findOne({_id: req.body.movie_id}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
             console.log("finding movie");
@@ -285,11 +342,9 @@ router.route('/movies')
         movie.title = req.body.title;
         movie.year = req.body.year;
         movie.genre = req.body.genre;
-        movie.actor_name = req.body.actor_name;
-        movie.char_name = req.body.char_name;
         movie.image_url = req.body.image_url;
         //save the movie
-        Movie.updateOne({title:req.body.current_title}, {$set: movie}, function(err) {
+        Movie.updateOne({_id:req.body.movie_id}, {$set: movie}, function(err) {
         //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
             if (err){
                 res.send(err);
@@ -332,10 +387,7 @@ function getReviews(movie, reviews){
     return movie;
 }
 
-function getReviewIndexes(movieId, reviews) {
-    console.log(movieId);
-    return reviews.map((review, i) => ( (movieId.equals(review.movie_id) ) ? i : false)).filter((review) => (review));
-}
+
 
         router.post('/signin', function(req, res) {
             var userNew = new User();
