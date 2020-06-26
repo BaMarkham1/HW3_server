@@ -196,6 +196,17 @@ router.route('/reviews/:movie_id')
         });
     });
 
+router.route('/roles/movie/:movie_id')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        console.log("in get roles");
+        let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
+        Role.find({movie_id : movie_id}).select('actor_id actor_name char_name').exec(function(err, roles) {
+            if (err) res.send(err);
+            console.log(roles);
+            res.json({ success: true, roles: roles});
+        });
+    });
+
 router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
