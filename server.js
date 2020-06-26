@@ -406,7 +406,7 @@ function getReviews(movie, reviews){
                     user.comparePassword(userNew.password, function(isMatch){
                         if (isMatch) {
                             var userToken = {id: user._id, username: user.username};
-                            var token = jwt.sign(userToken, "mongodb+srv://bendb:bendb@cluster0-gvkpo.mongodb.net/test?retryWrites=true&w=majority");
+                            var token = jwt.sign(userToken, process.env.SECRET_KEY);
                             res.json({success: true, token: 'JWT ' + token});
                         }
                         else {
