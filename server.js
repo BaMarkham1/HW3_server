@@ -185,12 +185,14 @@ function updateAverage(movie, newRating) {
         return ( ((movie.avg_rating * movie.reviews.length) + newRating) / (movie.reviews.length + 1) )
 }
 
-router.route('/reviews/:review_id')
+router.route('/reviews/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
-        let review_id = mongoose.Types.ObjectId(req.params.review_id);
-        Review.findOne({_id : review_id}).select('movie name quote rating').exec(function(err, review) {
+        console.log("in get reviews");
+        let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
+        Review.find({movie_id : movie_id}).select('movie name quote rating').exec(function(err, reviews) {
             if (err) res.send(err);
-            res.json({ success: true, review: review});
+            console.log(reviews)
+            res.json({ success: true, reviews: reviews});
         });
     });
 
@@ -401,7 +403,7 @@ function getReviews(movie, reviews){
                     user.comparePassword(userNew.password, function(isMatch){
                         if (isMatch) {
                             var userToken = {id: user._id, username: user.username};
-                            var token = jwt.sign(userToken, process.env.SECRET_KEY);
+                            var token = jwt.sign(userToken, "mongodb+srv://bendb:bendb@cluster0-gvkpo.mongodb.net/test?retryWrites=true&w=majority");
                             res.json({success: true, token: 'JWT ' + token});
                         }
                         else {
