@@ -199,11 +199,12 @@ router.route('/reviews/:movie_id')
 router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
-        Movie.findOne({_id: movie_id}).select('title year genre actors image_url reviews avg_rating').exec(function (err, movie) {
+        Movie.findOne({_id: movie_id}).select('title year genre actors image_url avg_rating').exec(function (err, movie) {
             if (err) res.send(err);
             else if (movie == null) res.status(400).send({msg: "movie by that name not found"})
-            Role.find({movie_id: req.params.movie_id}).select('actor_name char_name').exec(function (err, roles) {
-                movie.roles = roles;
+            res.status(200).send({msg: "GET movie and reviews", movie: movie});
+            //Role.find({movie_id: req.params.movie_id}).select('actor_name char_name').exec(function (err, roles) {
+                //movie.roles = roles;
                 /*
                 Review.find({movie_id: req.params.movie_id}).select('_id movie name quote rating').exec(function (err, reviews) {
                     if (err) res.send(err);
@@ -211,8 +212,6 @@ router.route('/movies/:movie_id')
                     res.status(200).send({msg: "GET movie and reviews", movie: movie});
                 });
                  */
-                res.status(200).send({msg: "GET movie and reviews", movie: movie});
-            });
         });
     });
 
@@ -406,7 +405,7 @@ function getReviews(movie, reviews){
                     user.comparePassword(userNew.password, function(isMatch){
                         if (isMatch) {
                             var userToken = {id: user._id, username: user.username};
-                            var token = jwt.sign(userToken, process.env.SECRET_KEY);
+                            var token = jwt.sign(userToken, "ADL;ASALK;DAKLJKL");
                             res.json({success: true, token: 'JWT ' + token});
                         }
                         else {
