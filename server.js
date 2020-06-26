@@ -204,11 +204,14 @@ router.route('/movies/:movie_id')
             else if (movie == null) res.status(400).send({msg: "movie by that name not found"})
             Role.find({movie_id: req.params.movie_id}).select('actor_name char_name').exec(function (err, roles) {
                 movie.roles = roles;
+                /*
                 Review.find({movie_id: req.params.movie_id}).select('_id movie name quote rating').exec(function (err, reviews) {
                     if (err) res.send(err);
                     movie.reviews = reviews;
                     res.status(200).send({msg: "GET movie and reviews", movie: movie});
                 });
+                 */
+                res.status(200).send({msg: "GET movie and reviews", movie: movie});
             });
         });
     });
