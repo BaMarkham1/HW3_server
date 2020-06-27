@@ -252,6 +252,15 @@ router.route('/movies/:movie_id')
         });
     });
 
+router.route('/actors')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        Actor.find().select('_id name img_url').exec(function (err, actors) {
+            if (err) res.send(err);
+            res.status(200).send({msg: "GET actors", actors: actors});
+        })
+    });
+
+
 router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         console.log(req)
