@@ -206,6 +206,18 @@ function getActorForRole(role) {
     })
 }
 
+function findActor(role, actors) {
+    //console.log("role's actor id type:")
+    //console.log(typeof(role.actor_id));
+    //console.log("type of actor id")
+    //actors.forEach(actor => console.log(typeof(actor._id)));
+    actorArray =  actors.filter(actor => role.actor_id.equals(actor._id));
+    console.log(actorArray);
+    role.img_url = actorArray[0].img_url;
+    role.actor_name = actorArray[0].name;
+    console.log(role)
+}
+
 router.route('/roles/movie/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         console.log("in get roles");
@@ -213,8 +225,11 @@ router.route('/roles/movie/:movie_id')
         Role.find({movie_id : movie_id}).select('actor_id char_name').exec(function(err, roles) {
             if (err) res.send(err);
             console.log(roles);
-
-            res.json({ success: true, movieRoles: roles});
+            actorIds = roles.map( role  =>  role.actor_id );
+            Actor.find({ _id : { $in : actorIds }}).select('img_url name').exec(function(err, actors) {
+                roles.forEach((role) => findActor(role, actors));
+                res.json({ success: true, movieRoles: roles});
+            });
         });
     });
 
