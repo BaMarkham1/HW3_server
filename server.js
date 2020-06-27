@@ -196,14 +196,25 @@ router.route('/reviews/:movie_id')
         });
     });
 
+function getActorForRole(role) {
+    Actor.findOne({_id: actor_id}).select('name img_url').exec(function(err, actor){
+        if (err) res.send(err);
+        console.log(actor);
+        role.actor_name = actor.name;
+        role.img_url = actor.img_url;
+        return role;
+    })
+}
+
 router.route('/roles/movie/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         console.log("in get roles");
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
-        Role.find({movie_id : movie_id}).select('actor_id actor_name char_name').exec(function(err, roles) {
+        Role.find({movie_id : movie_id}).select('actor_id char_name').exec(function(err, roles) {
             if (err) res.send(err);
             console.log(roles);
-            res.json({ success: true, roles: roles});
+
+            res.json({ success: true, movieRoles: roles});
         });
     });
 
