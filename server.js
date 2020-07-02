@@ -431,13 +431,30 @@ router.route('/movies')
             res.status(200).send({msg: "deleted movie"});
         })
     })
-    .get(authJwtController.isAuthenticated, function (req, res) {
-        var movieNew = new Movie();
-        Movie.find().select('_id title year genre image_url').exec(function (err, movies) {
-            if (err) res.send(err);
-            else res.status(200).send({msg: "GET movies", movies: movies});
+    .get(authJwtController.isAuthenticated, function(req, res) {
+        console.log(req);
+        Movie.aggregate([{
+            $lookup: {
+                from: "reviews",
+                localField: "_id",
+                foreignField: "movie_id",
+                as: "reviews"
+            }},
+            {
+                $addFields : {
+                    avg_rating: { $avg: "$reviews.rating" }
+                }},
+            {
+                $sort: {
+                    avg_rating: -1
+                }
+            }
+        ]).exec(function (err, movies) {
+            if (err) res.status(500).send(err);
+            // return the movies
+            res.status(200).send({msg: "GET movies", movies: movies})
         });
-    })
+    });
 
 function getReviews(movie, reviews){
     indexes = getReviewIndexes(movie._id, reviews)
