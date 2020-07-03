@@ -134,10 +134,10 @@ function updateDB(movie) {
 }
 
 function updateMovie(movie, reviews) {
-    newReviews = []
+    newReviews = [];
     indexes = getReviewIndexes(movie._id, reviews);
-    console.log("indexes:")
-    console.log(indexes)
+    console.log("indexes:");
+    console.log(indexes);
     indexes.forEach( index  =>  newReviews.push(reviews[index]._id) );
     movie.avg_rating = getAverageRating(reviews, indexes);
     movie.reviews = newReviews;
@@ -238,8 +238,19 @@ router.route('/movies/:movie_id')
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
         Movie.findOne({_id: movie_id}).select('title year genre image_url').exec(function (err, movie) {
             if (err) res.send(err);
-            else if (movie == null) res.status(400).send({msg: "movie by that name not found"})
-            res.status(200).send({msg: "GET movie and reviews", movie: movie});
+            else if (movie == null) res.status(400).send({msg: "movie by that name not found"});
+            Review.find({movie_id : movie._id}).select('rating').exec( function(err, reviews) {
+                console.log(reviews);
+                let ratings = 0;
+                reviews.forEach( review => {ratings = ratings + review.rating} );
+                console.log(ratings);
+                console.log(reviews.length);
+                console.log(ratings/reviews.length);
+                let avgRating = ratings/reviews.length;
+                movie.avg_rating = avgRating.toFixed(1);
+                res.status(200).send({msg: "GET movie and reviews", movie: movie});
+            });
+
         });
     });
 
@@ -257,25 +268,29 @@ router.route('/removeStuff')
         res.json({ success: true, message: 'hopefully'});
     });
 
-router.route('/movieRatingTest')
+router.route('/movieRatingTest/:movie_id')
     .get(authJwtController.isAuthenticated, function(req, res) {
         console.log(req);
-        Movie.aggregate([{
+        let movie_id = mongoose.Types.ObjectId(req.params.movie_id)
+        Movie.aggregate([
+        {
             $lookup: {
                 from: "reviews",
                 localField: "_id",
                 foreignField: "movie_id",
                 as: "reviews"
-            }},
-            {
-                $addFields : {
-                    avg_rating: { $avg: "$reviews.rating" }
-                }},
-            {
-                $sort: {
-                    avg_rating: -1
-                }
+            },
+        },
+        {
+            $match: {
+                "movie_id" : movie_id
+            },
+        },
+        {
+            $addFields : {
+                avg_rating: { $avg: "$reviews.rating" }
             }
+        },
         ]).exec(function (err, movies) {
                 if (err) res.status(500).send(err);
                 // return the movies
@@ -451,6 +466,10 @@ router.route('/movies')
             }
         ]).exec(function (err, movies) {
             if (err) res.status(500).send(err);
+            movies.forEach( (movie) => {
+                let avg_rating = movie.avg_rating;
+                movie.avg_rating = avg_rating.toFixed(1);
+            });
             // return the movies
             res.status(200).send({msg: "GET movies", movies: movies})
         });
