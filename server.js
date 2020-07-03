@@ -247,7 +247,7 @@ router.route('/movies/:movie_id')
                 console.log(reviews.length);
                 console.log(ratings/reviews.length);
                 let avgRating = ratings/reviews.length;
-                movie.avg_rating = avgRating.toFixed(1);
+                movie.avg_rating = parseFloat(avgRating.toFixed(1));
                 res.status(200).send({msg: "GET movie and reviews", movie: movie});
             });
 
@@ -468,7 +468,7 @@ router.route('/movies')
             if (err) res.status(500).send(err);
             movies.forEach( (movie) => {
                 let avg_rating = movie.avg_rating;
-                movie.avg_rating = avg_rating.toFixed(1);
+                movie.avg_rating = parseFloat(avg_rating.toFixed(1));
             });
             // return the movies
             res.status(200).send({msg: "GET movies", movies: movies})
