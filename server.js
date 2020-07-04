@@ -62,6 +62,21 @@ router.route('/role')
                 });
             });
         });
+    })
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        var role = {};
+        role.actor_id = req.body.actor_id;
+        role.movie_id = req.body.movie_id;
+        role.char_name = req.body.char_name;
+        //save the movie
+        Role.updateOne({_id: req.body._id}, {$set: role}, function(err) {
+            if (err){
+                res.send(err);
+            }
+            else {
+                res.status(200).send({msg: "updated movie", role: role});
+            }
+        })
     });
 
 router.route('/postjwt')
