@@ -17,7 +17,8 @@ var MovieSchema = new Schema({
     year: { type: Number, required: true },
     genre: { type: String, required: true },
     image_url: { type: String, required: false},
-    avg_rating: { type: Number, required: false }
+    avg_rating: { type: Number, required: false },
+    trailer_url: {type: String, required: false}
 });
 
 // return the model

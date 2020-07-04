@@ -251,7 +251,7 @@ router.route('/roles/movie/:movie_id')
 router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
-        Movie.findOne({_id: movie_id}).select('title year genre image_url').exec(function (err, movie) {
+        Movie.findOne({_id: movie_id}).select('title year genre image_url trailer_url').exec(function (err, movie) {
             if (err) res.send(err);
             else if (movie == null) res.status(400).send({msg: "movie by that name not found"});
             Review.find({movie_id : movie._id}).select('rating').exec( function(err, reviews) {
@@ -425,6 +425,7 @@ router.route('/movies')
         movie.year = req.body.year;
         movie.genre = req.body.genre;
         movie.image_url = req.body.image_url;
+        movie.trailer_url = req.body.trailer_url;
         // save the movie
         movie.save(function(err) {
             if (err) {
@@ -444,6 +445,7 @@ router.route('/movies')
         movie.year = req.body.year;
         movie.genre = req.body.genre;
         movie.image_url = req.body.image_url;
+        movie.trailer_url = req.body.trailer_url
         //save the movie
         Movie.updateOne({_id:req.body.movie_id}, {$set: movie}, function(err) {
         //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
