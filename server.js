@@ -271,7 +271,7 @@ router.route('/movies/:movie_id')
 
 router.route('/actors')
     .get(authJwtController.isAuthenticated, function (req, res) {
-        Actor.find().sort( { name : 1 } ).select('_id name img_url').exec(function (err, actors) {
+        Actor.find().sort( { [req.query.sort] : 1 } ).select('_id name img_url').exec(function (err, actors) {
         //Actor.find().select('_id name img_url').exec(function (err, actors) {
             if (err) res.send(err);
             res.status(200).send({msg: "GET actors", actors: actors});
