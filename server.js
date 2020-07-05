@@ -251,7 +251,7 @@ router.route('/roles/movie/:movie_id')
 router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
-        Movie.findOne({_id: movie_id}).select('title year genre image_url trailer_url').exec(function (err, movie) {
+        Movie.findOne({_id: movie_id}).select('title year genre genres image_url trailer_url').exec(function (err, movie) {
             if (err) res.send(err);
             else if (movie == null) res.status(400).send({msg: "movie by that name not found"});
             Review.find({movie_id : movie._id}).select('rating').exec( function(err, reviews) {
@@ -339,10 +339,6 @@ router.route('/reviews')
                 review.quote = req.body.quote;
                 review.rating = req.body.rating;
                 review.movie_id = req.body.movie_id;
-                //update movie with new review
-                movie.avg_rating = updateAverage(movie, review.rating);
-                movie.reviews.push(review._id);
-                updateDB(movie);
                 //save the review
                 review.save(function(err) {
                     if (err) {
