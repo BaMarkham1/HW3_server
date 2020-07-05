@@ -424,7 +424,7 @@ router.route('/movies')
         var movie = new Movie();
         movie.title = req.body.title;
         movie.year = req.body.year;
-        movie.genre = req.body.genre;
+        movie.genres = req.body.genres;
         movie.image_url = req.body.image_url;
         movie.trailer_url = req.body.trailer_url;
         // save the movie
