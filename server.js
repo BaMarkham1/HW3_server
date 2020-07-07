@@ -32,7 +32,23 @@ router.route('/actor')
             }
             res.json({ success: true, message: 'Actor created!' });
         });
+    })
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        var actor = {};
+        actor.name = req.body.name;
+        actor.img_url = req.body.img_url;
+        //save the movie
+        Actor.updateOne({_id: req.body.id}, {$set: actor}, function(err) {
+            if (err){
+                res.send(err);
+            }
+            else {
+                res.status(200).send({msg: "updated actor", actor: actor});
+            }
+        })
     });
+
+
 
 router.route('/role')
     .post(authJwtController.isAuthenticated, function (req, res) {
