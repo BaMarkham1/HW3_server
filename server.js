@@ -439,6 +439,7 @@ router.route('/movies')
         movie.genres = req.body.genres;
         movie.image_url = req.body.image_url;
         movie.trailer_url = req.body.trailer_url;
+        console.log(genres);
         // save the movie
         movie.save(function(err) {
             if (err) {
@@ -458,7 +459,8 @@ router.route('/movies')
         movie.year = req.body.year;
         movie.genre = req.body.genre;
         movie.image_url = req.body.image_url;
-        movie.trailer_url = req.body.trailer_url
+        movie.trailer_url = req.body.trailer_url;
+        movie.genres = req.body.genres;
         //save the movie
         Movie.updateOne({_id:req.body.movie_id}, {$set: movie}, function(err) {
         //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
