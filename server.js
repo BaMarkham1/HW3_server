@@ -479,25 +479,55 @@ router.route('/movies')
         })
     })
     .get(authJwtController.isAuthenticated, function(req, res) {
-        console.log(req);
-        Movie.aggregate([{
-            $lookup: {
-                from: "reviews",
-                localField: "_id",
-                foreignField: "movie_id",
-                as: "reviews"
+        let queryMapper = {
+            asc : 1,
+            desc : -1
+        };
+        //set variables for search, setting a default for each one not provided
+        let sortField, sortBy, minYear, maxYear, minRating, maxRating, genre;
+        req.query.sort ? sortField = req.query.sort : sortField = "avg_rating";
+        req.query.sortBy ? sortBy = queryMapper[req.query.sortBy] : sortBy = -1;
+        req.query.minYear ? minYear = parseInt(req.query.minYear) : minYear = 1800;
+        req.query.maxYear ? maxYear = parseInt(req.query.maxYear) : maxYear = 2100;
+        req.query.minRating ? minRating = parseFloat(req.query.minRating) : minRating = 0.0;
+        req.query.maxRating ? maxRating = parseFloat(req.query.maxRating) : maxRating = 5.0;
+        Movie.aggregate([
+            {
+                $match :
+                    {
+                        year : {$gte : minYear, $lte: maxYear }
+                    }
+
+            },
+            {
+                $lookup: {
+                    from: "reviews",
+                    localField: "_id",
+                    foreignField: "movie_id",
+                    as: "reviews",
+
             }},
             {
                 $addFields : {
                     avg_rating: { $avg: "$reviews.rating" }
-                }},
+                }
+            },
             {
                 $sort: {
-                    avg_rating: -1
+                    [sortField] : sortBy
                 }
+            },
+            {
+                //have to do this match afterwards as don't have avg_rating until after the lookup
+                $match :
+                    {
+                        avg_rating : {$gte : minRating, $lte : maxRating}
+                    }
             }
         ]).exec(function (err, movies) {
             if (err) res.status(500).send(err);
+            //filter result by genres
+            if (req.query.genre) movies = filterByGenre(movies, req.query.genre);
             movies.forEach( (movie) => {
                 let avg_rating = movie.avg_rating;
                 movie.avg_rating = parseFloat(avg_rating.toFixed(1));
@@ -507,6 +537,16 @@ router.route('/movies')
         });
     });
 
+//have to filter by genre outside of database call b/c elemMatch is not in free tier of Atlas
+//takes the genre query params and returns just the movies that are one of those genres
+function filterByGenre(movies, genres){
+    return movies.filter(function(movie){
+        for (let i = 0; i < genres.length; i++){
+            if (movie.genres.includes(genres[i])) return true;
+        }
+    });
+}
+
 function getReviews(movie, reviews){
     indexes = getReviewIndexes(movie._id, reviews)
     newReviews = []
@@ -515,32 +555,29 @@ function getReviews(movie, reviews){
     return movie;
 }
 
-
-
-        router.post('/signin', function(req, res) {
-            var userNew = new User();
-            userNew.name = req.body.name;
-            userNew.username = req.body.username;
-            userNew.password = req.body.password;
-
-            User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
-                if (err) res.send(err);
-                if (user){
-                    user.comparePassword(userNew.password, function(isMatch){
-                        if (isMatch) {
-                            var userToken = {id: user._id, username: user.username};
-                            var token = jwt.sign(userToken, "ADL;ASALK;DAKLJKL");
-                            res.json({success: true, token: 'JWT ' + token});
-                        }
-                        else {
-                            res.status(401).send({success: false, message: 'password incorrect.'});
-                        }
-                    });
+router.post('/signin', function(req, res) {
+    var userNew = new User();
+    userNew.name = req.body.name;
+    userNew.username = req.body.username;
+    userNew.password = req.body.password;
+    User.findOne({ username: userNew.username }).select('name username password').exec(function(err, user) {
+        if (err) res.send(err);
+        if (user){
+            user.comparePassword(userNew.password, function(isMatch){
+                if (isMatch) {
+                    let userToken = {id: user._id, username: user.username};
+                    let token = jwt.sign(userToken, "ADL;ASALK;DAKLJKL");
+                    res.json({success: true, token: 'JWT ' + token});
                 }
-                else
-                    res.status(401).send({success: false, message: 'username not found.'})
+                else {
+                    res.status(401).send({success: false, message: 'password incorrect.'});
+                }
             });
-        });
+        }
+        else
+            res.status(401).send({success: false, message: 'username not found.'})
+    });
+});
 
 app.use('/', router);
 app.listen(process.env.PORT || 8080);
