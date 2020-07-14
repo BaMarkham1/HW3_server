@@ -433,13 +433,13 @@ router.route('/movies/actors')
 
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
+        console.log(req.body);
         var movie = new Movie();
         movie.title = req.body.title;
         movie.year = req.body.year;
         movie.genres = req.body.genres;
         movie.image_url = req.body.image_url;
         movie.trailer_url = req.body.trailer_url;
-        console.log(genres);
         // save the movie
         movie.save(function(err) {
             if (err) {
@@ -526,14 +526,30 @@ router.route('/movies')
             }
         ]).exec(function (err, movies) {
             if (err) res.status(500).send(err);
-            //filter result by genres
-            if (req.query.genre) movies = filterByGenre(movies, req.query.genre);
-            movies.forEach( (movie) => {
-                let avg_rating = movie.avg_rating;
-                movie.avg_rating = parseFloat(avg_rating.toFixed(1));
+            //now find any movies that have no reviews
+            //start by getting all the id's of the returned movies
+            reviewed_ids = movies.map( (movie) => movie._id );
+            console.log("reviewed ids:");
+            console.log(reviewed_ids);
+            //find all movies that don't match an id in the reviewed_ids
+            Movie.find( { _id: { $nin: reviewed_ids } } ).select('title year genre genres image_url trailer_url').exec(function (err, unreviewedMovies) {
+                unreviewedMovies.forEach( (movie) => {
+                    movie.avg_rating = 1.0;
+                } );
+                console.log("unreviewed movies set to 1 star rating:");
+                console.log(unreviewedMovies);
+                //now add unreviewed movies to the rest of the movies
+                movies.push.apply(movies, unreviewedMovies);
+                //filter result by genres
+                if (req.query.genre) movies = filterByGenre(movies, req.query.genre);
+                movies.forEach( (movie) => {
+                    let avg_rating = movie.avg_rating;
+                    movie.avg_rating = parseFloat(avg_rating.toFixed(1));
+                });
+                // return the movies
+                res.status(200).send({msg: "GET movies", movies: movies});
             });
-            // return the movies
-            res.status(200).send({msg: "GET movies", movies: movies})
+
         });
     });
 
