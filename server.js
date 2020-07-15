@@ -25,7 +25,7 @@ router.route('/actor')
     .post(authJwtController.isAuthenticated, function (req, res) {
         var actor = new Actor();
         actor.name = req.body.name;
-        actor.img_url = req.body.img_url;
+        actor.img_url = req.body.image_url;
         actor.save(function(err) {
             if (err) {
                 return res.status(400).json({ success: false, message: 'An error occurred'});
@@ -370,7 +370,7 @@ router.route('/reviews')
         var reviewNew = new Review();
         if (req.body.movie) {
             reviewNew.movie = req.body.movie;
-            Review.find({movie: reviewNew.movie}).select('movie name quote rating').exec(function (err, reviews) {
+            Review.find({movie: reviewNew.movie}).sort({$natural:-1}).select('movie name quote rating').exec(function (err, reviews) {
                 if (err) res.send(err);
                 res.status(200).send({msg: "GET review", review: reviews});
             });
@@ -433,8 +433,10 @@ router.route('/movies/actors')
 
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
+        console.log("body of post request:");
         console.log(req.body);
         var movie = new Movie();
+        movie._id = req.body._id;
         movie.title = req.body.title;
         movie.year = req.body.year;
         movie.genres = req.body.genres;
@@ -534,10 +536,10 @@ router.route('/movies')
             //find all movies that don't match an id in the reviewed_ids
             Movie.find( { _id: { $nin: reviewed_ids } } ).select('title year genre genres image_url trailer_url').exec(function (err, unreviewedMovies) {
                 unreviewedMovies.forEach( (movie) => {
-                    movie.avg_rating = 1.0;
+                    movie.avg_rating = 0.0;
                 } );
-                console.log("unreviewed movies set to 1 star rating:");
-                console.log(unreviewedMovies);
+                //console.log("unreviewed movies set to 1 star rating:");
+                //console.log(unreviewedMovies);
                 //now add unreviewed movies to the rest of the movies
                 movies.push.apply(movies, unreviewedMovies);
                 //filter result by genres
