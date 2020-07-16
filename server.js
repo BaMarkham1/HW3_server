@@ -488,7 +488,7 @@ router.route('/movies')
         //set variables for search, setting a default for each one not provided
         let sortField, sortBy, minYear, maxYear, minRating, maxRating, genre;
         req.query.sort ? sortField = req.query.sort : sortField = "avg_rating";
-        req.query.sortBy ? sortBy = queryMapper[req.query.sortBy] : sortBy = -1;
+        req.query.ascendingOrder ? sortBy = 1 : sortBy = -1;
         req.query.minYear ? minYear = parseInt(req.query.minYear) : minYear = 1800;
         req.query.maxYear ? maxYear = parseInt(req.query.maxYear) : maxYear = 2100;
         req.query.minRating ? minRating = parseFloat(req.query.minRating) : minRating = 0.0;
@@ -528,30 +528,44 @@ router.route('/movies')
             }
         ]).exec(function (err, movies) {
             if (err) res.status(500).send(err);
-            //now find any movies that have no reviews
-            //start by getting all the id's of the returned movies
-            reviewed_ids = movies.map( (movie) => movie._id );
-            console.log("reviewed ids:");
-            console.log(reviewed_ids);
-            //find all movies that don't match an id in the reviewed_ids
-            Movie.find( { _id: { $nin: reviewed_ids } } ).select('title year genre genres image_url trailer_url').exec(function (err, unreviewedMovies) {
-                unreviewedMovies.forEach( (movie) => {
-                    movie.avg_rating = 0.0;
-                } );
-                //console.log("unreviewed movies set to 1 star rating:");
-                //console.log(unreviewedMovies);
-                //now add unreviewed movies to the rest of the movies
-                movies.push.apply(movies, unreviewedMovies);
+            //as long as excludeUnreviewed wasn't provided, find any movies that have no reviews
+            if (!req.query.excludeUnreviewed) {
+                //start by getting all the id's of the returned movies
+                reviewed_ids = movies.map((movie) => movie._id);
+                console.log("reviewed ids:");
+                console.log(reviewed_ids);
+                //find all movies that don't match an id in the reviewed_ids
+                Movie.find({_id: {$nin: reviewed_ids}}).select('title year genre genres image_url trailer_url').exec(function (err, unreviewedMovies) {
+                    unreviewedMovies.forEach((movie) => {
+                        movie.avg_rating = 0.0;
+                    });
+                    //console.log("unreviewed movies set to 1 star rating:");
+                    //console.log(unreviewedMovies);
+                    //now add unreviewed movies to the rest of the movies
+                    //to-do: if not sorted by descended rating, need to re-sort
+                    //to-do: if sorted by ascending rating, can push arrays to the front of the array instead
+                    movies.push.apply(movies, unreviewedMovies);
+                    //filter result by genres
+                    if (req.query.genre) movies = filterByGenre(movies, req.query.genre);
+                    movies.forEach((movie) => {
+                        let avg_rating = movie.avg_rating;
+                        movie.avg_rating = parseFloat(avg_rating.toFixed(1));
+                    });
+                    // return the movies
+                    res.status(200).send({msg: "GET movies", movies: movies});
+                });
+            }
+            //else, if excludeUnreviewed was provided, do the same thing but without the find operation
+            //kinda messy, but not sure how to do it otherwise
+            else {
                 //filter result by genres
                 if (req.query.genre) movies = filterByGenre(movies, req.query.genre);
-                movies.forEach( (movie) => {
+                movies.forEach((movie) => {
                     let avg_rating = movie.avg_rating;
                     movie.avg_rating = parseFloat(avg_rating.toFixed(1));
                 });
-                // return the movies
                 res.status(200).send({msg: "GET movies", movies: movies});
-            });
-
+            }
         });
     });
 
