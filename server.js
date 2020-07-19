@@ -294,6 +294,15 @@ router.route('/actors')
         })
     });
 
+router.route('/actors/:actor_id')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        let actor_id = mongoose.Types.ObjectId(req.params.actor_id);
+        Actor.findOne({_id: actor_id}).select('_id name img_url').exec(function (err, actor) {
+            if (err) res.send(err);
+            res.status(200).send({msg: "GET actor", actor: actor});
+        })
+    });
+
 router.route('/removeStuff')
     .post(authJwtController.isAuthenticated, function(req, res) {
         Movie.update({}, {$unset: {avg_rating:1}} , {multi: true});
@@ -335,7 +344,7 @@ router.route('/reviews')
     .post(authJwtController.isAuthenticated, function (req, res) {
         console.log(req)
         //check if movie exists, if not can't post review for it
-        Movie.findOne({_id: req.body.movie_id}).select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movie) {
+        Movie.findOne({_id: req.body.movie_id}).select('title year genre actor_name char_name image_url reviews avg_rating reviewed').exec(function (err, movie) {
             console.log("finding movie");
             if (err) res.send(err);
             else if (movie == null) {
@@ -361,6 +370,15 @@ router.route('/reviews')
                         return res.status(400).send(err);
                     }
                     console.log("saving review");
+                    if (movie.reviewed !== true) {
+                        movie.reviewed = true;
+                        Movie.updateOne({_id:req.body.movie_id}, {$set: movie}, function(err) {
+                            //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
+                            if (err){
+                                res.send(err);
+                            }
+                        })
+                    }
                     res.json({ success: true, message: 'Review created!'});
                 });
             });
@@ -442,6 +460,7 @@ router.route('/movies')
         movie.genres = req.body.genres;
         movie.image_url = req.body.image_url;
         movie.trailer_url = req.body.trailer_url;
+        movie.reviewed = false;
         // save the movie
         movie.save(function(err) {
             if (err) {
@@ -528,29 +547,41 @@ router.route('/movies')
             }
         ]).exec(function (err, movies) {
             if (err) res.status(500).send(err);
+
             //as long as excludeUnreviewed wasn't provided, find any movies that have no reviews
             if (!req.query.excludeUnreviewed) {
                 //start by getting all the id's of the returned movies
-                reviewed_ids = movies.map((movie) => movie._id);
-                console.log("reviewed ids:");
-                console.log(reviewed_ids);
+                //reviewed_ids = movies.map((movie) => movie._id);
+                //console.log("reviewed ids:");
+                //console.log(reviewed_ids);
                 //find all movies that don't match an id in the reviewed_ids
-                Movie.find({_id: {$nin: reviewed_ids}}).select('title year genre genres image_url trailer_url').exec(function (err, unreviewedMovies) {
+                Movie.find({ $and:[
+                        {reviewed: false},
+                        {year : {$gte: minYear, $lte: maxYear}}
+                    ] }).select('title year genre genres image_url trailer_url').exec(function (err, unreviewedMovies) {
                     unreviewedMovies.forEach((movie) => {
                         movie.avg_rating = 0.0;
                     });
                     //console.log("unreviewed movies set to 1 star rating:");
                     //console.log(unreviewedMovies);
                     //now add unreviewed movies to the rest of the movies
-                    //to-do: if not sorted by descended rating, need to re-sort
-                    //to-do: if sorted by ascending rating, can push arrays to the front of the array instead
                     movies.push.apply(movies, unreviewedMovies);
+                    //re-sort with the unreviewed movies
+                    movies.sort((a, b) => (a[sortField] > b[sortField]) ? sortBy : -1*sortBy);
                     //filter result by genres
-                    if (req.query.genre) movies = filterByGenre(movies, req.query.genre);
+                    let genre;
+                    if (req.query.genre) {
+                        typeof(req.query.genre) === 'string' ? genre = [req.query.genre] : genre = req.query.genre;
+                        movies = filterByGenre(movies, genre);
+                    }
+                    console.log("movie length");
+                    console.log(movies.length);
                     movies.forEach((movie) => {
                         let avg_rating = movie.avg_rating;
                         movie.avg_rating = parseFloat(avg_rating.toFixed(1));
                     });
+                    console.log("movie length");
+                    console.log(movies.length);
                     // return the movies
                     res.status(200).send({msg: "GET movies", movies: movies});
                 });
@@ -559,7 +590,10 @@ router.route('/movies')
             //kinda messy, but not sure how to do it otherwise
             else {
                 //filter result by genres
-                if (req.query.genre) movies = filterByGenre(movies, req.query.genre);
+                if (req.query.genre) {
+                    typeof(req.query.genre) === 'string' ? genre = [req.query.genre] : genre = req.query.genre;
+                    movies = filterByGenre(movies, genre);
+                }
                 movies.forEach((movie) => {
                     let avg_rating = movie.avg_rating;
                     movie.avg_rating = parseFloat(avg_rating.toFixed(1));

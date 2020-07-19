@@ -20,7 +20,8 @@ var MovieSchema = new Schema({
     image_url: { type: String, required: false},
     avg_rating: { type: Number, required: false },
     trailer_url: {type: String, required: false},
-    genres: [{type: String, enum: ['Action', 'Horror', 'Comedy', 'Adventure', 'Science Fiction', 'Romance', 'Fantasy', 'Sports', 'Drama'], required: true}]
+    genres: [{type: String, enum: ['Action', 'Horror', 'Comedy', 'Adventure', 'Science Fiction', 'Romance', 'Fantasy', 'Sports', 'Drama'], required: true}],
+    reviewed: { type: Boolean, required: true }
 });
 
 // return the model
