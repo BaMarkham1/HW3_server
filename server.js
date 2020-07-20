@@ -264,6 +264,29 @@ router.route('/roles/movie/:movie_id')
         });
     });
 
+function findMovie(role, movies) {
+    movieArray =  movies.filter(movie => role.movie_id.equals(movie._id));
+    console.log(movieArray);
+    role.movie_img = movieArray[0].image_url;
+    role.movie_name = movieArray[0].title;
+    console.log(role)
+}
+
+router.route('/roles/actor/:actor_id')
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        console.log("in get roles");
+        let actor_id = mongoose.Types.ObjectId(req.params.actor_id);
+        Role.find({actor_id : actor_id}).select('movie_id char_name').exec(function(err, roles) {
+            if (err) res.send(err);
+            console.log(roles);
+            movieIds = roles.map( role  =>  role.movie_id );
+            Movie.find({ _id : { $in : movieIds }}).select('title image_url').exec(function(err, movies) {
+                roles.forEach((role) => findMovie(role, movies));
+                res.json({ success: true, actorRoles: roles});
+            });
+        });
+    });
+
 router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);

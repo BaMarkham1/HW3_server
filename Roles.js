@@ -10,6 +10,7 @@ var RoleSchema = new Schema({
     char_name: { type: String, required: true },
     actor_name : {type: String, required: false},
     movie_name : {type: String, required: false},
+    movie_img : {type: String, required: false},
     img_url : {type: String, required: false}
 });
 
