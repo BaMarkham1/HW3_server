@@ -21,36 +21,7 @@ app.use(passport.initialize());
 
 var router = express.Router();
 
-router.route('/actor')
-    .post(authJwtController.isAuthenticated, function (req, res) {
-        var actor = new Actor();
-        actor.name = req.body.name;
-        actor.img_url = req.body.image_url;
-        actor.save(function(err) {
-            if (err) {
-                return res.status(400).json({ success: false, message: 'An error occurred'});
-            }
-            res.json({ success: true, message: 'Actor created!' });
-        });
-    })
-    .put(authJwtController.isAuthenticated, function (req, res) {
-        var actor = {};
-        actor.name = req.body.name;
-        actor.img_url = req.body.img_url;
-        //save the movie
-        Actor.updateOne({_id: req.body.id}, {$set: actor}, function(err) {
-            if (err){
-                res.send(err);
-            }
-            else {
-                res.status(200).send({msg: "updated actor", actor: actor});
-            }
-        })
-    });
-
-
-
-router.route('/role')
+router.route('/roles')
     .post(authJwtController.isAuthenticated, function (req, res) {
         var role = new Role();
         Movie.findOne({_id: req.body.movie_id}).select('_id title').exec(function (err, movie) {
@@ -222,7 +193,7 @@ router.route('/reviews/:movie_id')
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
         Review.find({movie_id : movie_id}).select('movie name quote rating').exec(function(err, reviews) {
             if (err) res.send(err);
-            console.log(reviews)
+            console.log(reviews);
             res.json({ success: true, reviews: reviews});
         });
     });
@@ -314,6 +285,33 @@ router.route('/actors')
         //Actor.find().select('_id name img_url').exec(function (err, actors) {
             if (err) res.send(err);
             res.status(200).send({msg: "GET actors", actors: actors});
+        })
+    })
+    .post(authJwtController.isAuthenticated, function (req, res) {
+        var actor = new Actor();
+        actor.name = req.body.name;
+        actor.img_url = req.body.image_url;
+        actor.save(function(err) {
+            if (err) {
+                return res.status(400).json({ success: false, message: 'An error occurred'});
+            }
+            res.json({ success: true, message: 'Actor created!' });
+        });
+    })
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        var actor = {};
+        actor.name = req.body.name;
+        actor.img_url = req.body.img_url;
+        //save the movie
+        Actor.updateOne({_id: req.body._id}, {$set: actor}, function(err) {
+            if (err){
+                res.send(err);
+            }
+            else {
+                res.status(200).send({msg: "updated actor", actor: actor});
+                console.log("actor:");
+                console.log(actor);
+            }
         })
     });
 
