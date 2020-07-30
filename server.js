@@ -193,8 +193,15 @@ router.route('/reviews/:movie_id')
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
         Review.find({movie_id : movie_id}).select('movie name quote rating').exec(function(err, reviews) {
             if (err) res.send(err);
-            console.log(reviews);
-            res.json({ success: true, reviews: reviews});
+            //get the user from the token
+            auth = req.headers.authorization.split(' ')[1];
+            verified = jwt.verify(auth, authJwtController.secret);
+            User.findOne({_id : verified.id}).select('username').exec(function(err, user) {
+                const userReviewIndex = reviews.findIndex(review => review.name === user.username);
+                res.status(200).send({msg: "GET reviews", reviews: reviews, userReviewIndex: userReviewIndex});
+            });
+            //console.log(reviews);
+            //res.json({ success: true, reviews: reviews});
         });
     });
 
@@ -411,7 +418,13 @@ router.route('/reviews')
             reviewNew.movie = req.body.movie;
             Review.find({movie: reviewNew.movie}).sort({$natural:-1}).select('movie name quote rating').exec(function (err, reviews) {
                 if (err) res.send(err);
-                res.status(200).send({msg: "GET review", review: reviews});
+                //get the user from the token
+                auth = req.headers.authorization.split(' ')[1];
+                verified = jwt.verify(auth, authJwtController.secret);
+                User.findOne({_id : verified.id}).select('username').exec(function(err, user) {
+                    const userReviewIndex = reviews.findIndex(review => review.name === user.username);
+                    res.status(200).send({msg: "GET reviews", reviews: reviews, userReviewIndex: userReviewIndex});
+                });
             });
         }
         else{
@@ -422,9 +435,29 @@ router.route('/reviews')
         }
     })
     .put(function (req, res) {
-        Movie.find().select('_id reviews').exec(function (err, movies) {
+        var review = {};
+        //get the user from the token
+        auth = req.headers.authorization.split(' ')[1];
+        verified = jwt.verify(auth, authJwtController.secret);
+        User.findOne({_id: verified.id}).select('username').exec(function (err, user) {
+            console.log("getting user");
             if (err) res.send(err);
-            movies.forEach((movie) => updateReviews(movie._id, movie.reviews));
+            //create review document
+            var review = new Review();
+            //get the information
+            review._id = mongoose.Types.ObjectId(req.body._id);
+            review.name = user.username;
+            review.quote = req.body.quote;
+            review.rating = req.body.rating;
+            review.movie_id = req.body.movie_id;
+            //save the review
+            Review.updateOne({_id: review._id}, {$set: review}, function (err) {
+                if (err) {
+                    res.send(err);
+                } else {
+                    res.status(200).send({msg: "updated review"});
+                }
+            })
         })
     });
 
