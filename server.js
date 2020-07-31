@@ -7,6 +7,7 @@ var Movie = require('./Movies');
 var Review = require('./Reviews');
 var Actor = require('./Actors');
 var Role = require('./Roles');
+var Watchlist = require('./Watchlist');
 var jwt = require('jsonwebtoken');
 var cors = require('cors');
 var mongoose = require('mongoose');
@@ -187,7 +188,47 @@ function updateAverage(movie, newRating) {
         return ( ((movie.avg_rating * movie.reviews.length) + newRating) / (movie.reviews.length + 1) )
 }
 
-router.route('/reviews/:movie_id')
+router.route('/reviews/:review_id')
+    .delete(authJwtController.isAuthenticated, function (req, res) {
+        let review_id = mongoose.Types.ObjectId(req.params.review_id);
+        Review.deleteOne({_id: review_id}, function(err, obj) {
+            if (err) throw err;
+            res.status(200).send({msg: "deleted review"});
+        })
+    });
+
+router.route('/watchlist/movie/:movie_id')
+    .post(authJwtController.isAuthenticated, function (req, res) {
+        let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
+        //get the user from the token
+        auth = req.headers.authorization.split(' ')[1];
+        verified = jwt.verify(auth, authJwtController.secret);
+        var watchlist = new Watchlist();
+        watchlist.movie_id = movie_id;
+        watchlist.user_id = verified.id;
+        //save the watchlist doc
+        watchlist.save(function(err) {
+            if (err) {
+                return res.status(400).json({ success: false, message: 'An error occurred'});
+            }
+            res.json({ success: true, message: 'added to watchlist!' });
+        });
+    })
+    .get(authJwtController.isAuthenticated, function (req, res) {
+        let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
+        //get the user from the token
+        auth = req.headers.authorization.split(' ')[1];
+        verified = jwt.verify(auth, authJwtController.secret);
+        Watchlist.find({movie_id: movie_id}).select('user_id').exec( function(err, watchlist) {
+            if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
+            console.log(verified);
+            //check if on user's watchlist
+            let onUsersWatchlist = watchlist.some( item => item['user_id'].toString() === verified.id);
+            res.status(200).send({msg: "GET movie watchlist", watchlistCount: watchlist.length, onUsersWatchlist: onUsersWatchlist});
+        });
+    });
+
+router.route('/reviews/movie/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         console.log("in get reviews");
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
