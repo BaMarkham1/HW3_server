@@ -109,6 +109,7 @@ router.post('/signup', function(req, res) {
         user.name = req.body.name;
         user.username = req.body.username;
         user.password = req.body.password;
+        user.profile_pic = "https://lh3.googleusercontent.com/proxy/YbAcyq6fM79SHJGMKczVtgquJLA7oQaub9RxSPVzzoW6QAfjOwpiBxllE22CpnILhAPGHiKL1p1CrT7GWVU64VVrZaL85vRNsvZqIAHw7Rp_mfNglSwGZrtkXjmlg0KMmgs";
         // save the user
         user.save(function(err) {
             if (err) {
@@ -169,6 +170,21 @@ function getReviewIndexes(movieId, reviews) {
     return reviews.map((review, i) => ( (movieId.equals(review.movie_id) ) ? i : false)).filter((review) => (review));
 }
 
+router.route('/users/profilePic')
+    .put(authJwtController.isAuthenticated, function (req, res) {
+        User.find().select().exec(function(err, users){
+            users.forEach( (user) => {
+                user.profile_pic = "https://lh3.googleusercontent.com/proxy/YbAcyq6fM79SHJGMKczVtgquJLA7oQaub9RxSPVzzoW6QAfjOwpiBxllE22CpnILhAPGHiKL1p1CrT7GWVU64VVrZaL85vRNsvZqIAHw7Rp_mfNglSwGZrtkXjmlg0KMmgs"
+                User.updateOne({_id:user._id}, {$set: user}, function(err) {
+                    if (err){
+                        res.send(err);
+                    }
+                })
+            });
+            res.status(200).send({msg: "updated users", users: users});
+        });
+    });
+
 router.route('/movies/reviews')
     .put(authJwtController.isAuthenticated, function (req, res) {
         Movie.find().select('title year genre actor_name char_name image_url reviews avg_rating').exec(function (err, movies) {
@@ -195,6 +211,17 @@ router.route('/reviews/:review_id')
             if (err) throw err;
             res.status(200).send({msg: "deleted review"});
         })
+    });
+
+router.route('/watchlist')
+    .get(authJwtController.isAuthenticated, function(req, res){
+        //get the user from the token
+        auth = req.headers.authorization.split(' ')[1];
+        verified = jwt.verify(auth, authJwtController.secret);
+        Watchlist.find({user_id: verified.id}).select('movie_id').exec(function(err, watchlist) {
+            if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
+            else return res.status(200).json({success: true, watchlist: watchlist});
+        });
     });
 
 router.route('/watchlist/movie/:movie_id')
@@ -226,6 +253,16 @@ router.route('/watchlist/movie/:movie_id')
             let onUsersWatchlist = watchlist.some( item => item['user_id'].toString() === verified.id);
             res.status(200).send({msg: "GET movie watchlist", watchlistCount: watchlist.length, onUsersWatchlist: onUsersWatchlist});
         });
+    })
+    .delete(authJwtController.isAuthenticated, function(req, res) {
+        let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
+        //get the user from the token
+        auth = req.headers.authorization.split(' ')[1];
+        verified = jwt.verify(auth, authJwtController.secret);
+        Watchlist.deleteOne({movie_id: movie_id}, {user_id: verified.id}, function(err, obj) {
+            if (err) throw err;
+            res.status(200).send({msg: "deleted movie from watchlist"});
+        })
     });
 
 router.route('/reviews/movie/:movie_id')
