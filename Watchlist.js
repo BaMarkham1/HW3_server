@@ -6,7 +6,8 @@ mongoose.set('useCreateIndex', true);
 
 var WatchlistSchema = new Schema({
     movie_id: {type: mongoose.Schema.Types.ObjectId, required: true},
-    user_id: {type: mongoose.Schema.Types.ObjectId, required: true}
+    user_id: {type: mongoose.Schema.Types.ObjectId, required: true},
+    username: {type: String, required: true}
 });
 
 module.exports = mongoose.model('Watchlist', WatchlistSchema, 'watchlist');

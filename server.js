@@ -114,7 +114,7 @@ router.post('/signup', function(req, res) {
         user.save(function(err) {
             if (err) {
                 // duplicate entry
-                if (err.code == 11000)
+                if (err.code === 11000)
                     return res.status(400).send({ success: false, message: 'A user with that username already exists. '});
                 else
                     return res.send(err);
@@ -150,7 +150,7 @@ function updateMovie(movie, reviews) {
 }
 
 function getAverageRating(reviews, indexes){
-    if (indexes.length == 0) return 0;
+    if (indexes.length === 0) return 0;
     sum = 0;
     indexes.forEach(index => {
         sum = sum + reviews[index].rating;
@@ -214,11 +214,39 @@ router.route('/reviews/:review_id')
     });
 
 router.route('/watchlist')
+    .put(authJwtController.isAuthenticated, function(req, res){
+        Watchlist.find().select('_id user_id').exec(function (err, watchlist) {
+            watchlist.forEach( (item) => {
+                User.findOne({_id : item.user_id}).select('username').exec(function(err, user) {
+                    console.log("user:");
+                    console.log(user);
+                    item.username = user.username;
+                    Watchlist.updateOne({_id: item._id}, {$set: item}, function(err) {
+                        if (err){
+                            res.send(err);
+                        }
+                        else {
+                            console.log("watchlist item:");
+                            console.log(item);
+                        }
+                    })
+                });
+            })
+        });
+    });
+
+router.route('/profilePic/user/:username')
     .get(authJwtController.isAuthenticated, function(req, res){
-        //get the user from the token
-        auth = req.headers.authorization.split(' ')[1];
-        verified = jwt.verify(auth, authJwtController.secret);
-        Watchlist.find({user_id: verified.id}).select('movie_id').exec(function(err, watchlist) {
+        User.findOne({username: req.params.username}).select('profile_pic').exec(function(err, user) {
+            console.log(user);
+            if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
+            return res.status(200).json({success: true, profilePic: user.profile_pic});
+        });
+    });
+
+router.route('/watchlist/user/:username')
+    .get(authJwtController.isAuthenticated, function(req, res){
+        Watchlist.find({username: req.params.username}).select('movie_id').exec(function(err, watchlist) {
             if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
             else return res.status(200).json({success: true, watchlist: watchlist});
         });
@@ -278,8 +306,14 @@ router.route('/reviews/movie/:movie_id')
                 const userReviewIndex = reviews.findIndex(review => review.name === user.username);
                 res.status(200).send({msg: "GET reviews", reviews: reviews, userReviewIndex: userReviewIndex});
             });
-            //console.log(reviews);
-            //res.json({ success: true, reviews: reviews});
+        });
+    });
+
+router.route('/reviews/user/:username')
+    .get(authJwtController.isAuthenticated, function(req, res){
+        Review.find({name: req.params.username}).select('movie_id').exec(function(err, reviews) {
+            if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
+            else return res.status(200).json({success: true, reviews: reviews});
         });
     });
 
@@ -294,10 +328,6 @@ function getActorForRole(role) {
 }
 
 function findActor(role, actors) {
-    //console.log("role's actor id type:")
-    //console.log(typeof(role.actor_id));
-    //console.log("type of actor id")
-    //actors.forEach(actor => console.log(typeof(actor._id)));
     actorArray =  actors.filter(actor => role.actor_id.equals(actor._id));
     console.log(actorArray);
     role.img_url = actorArray[0].img_url;
@@ -479,7 +509,6 @@ router.route('/reviews')
                     if (movie.reviewed !== true) {
                         movie.reviewed = true;
                         Movie.updateOne({_id:req.body.movie_id}, {$set: movie}, function(err) {
-                            //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
                             if (err){
                                 res.send(err);
                             }
@@ -544,19 +573,17 @@ function updateReviews(movie_id, reviews) {
     }
 
 function updateReview(movie_id, review_id) {
-    //Review.findOne({ _id: review_id }).select('_id movie_id movie name quote rating').exec(function(err, review) {
-        //review.movie_id = movie_id;
-        Review.updateOne({_id: review_id}, {$set: { movie_id : movie_id }}, function (err) {
-            //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
-            if (err) {
-                res.send(err);
-            } else {
-                console.log("updated review");
-                console.log(review_id);
-                console.log(movie_id);
-            }
-        })
-    //})
+    Review.updateOne({_id: review_id}, {$set: { movie_id : movie_id }}, function (err) {
+        //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
+        if (err) {
+            res.send(err);
+        } else {
+            console.log("updated review");
+            console.log(review_id);
+            console.log(movie_id);
+        }
+    })
+
 }
 
 function updateActors(movie) {
@@ -568,8 +595,6 @@ function updateActors(movie) {
             console.log("updated actors");
         }
     })
-
-
 }
 
 //take the info in actor_name and char_name and make a new field, actors
@@ -579,7 +604,6 @@ router.route('/movies/actors')
             movies.forEach( (movie, i) => updateActors(movie) );
         });
     });
-
 
 router.route('/movies')
     .post(authJwtController.isAuthenticated, function (req, res) {
@@ -616,7 +640,6 @@ router.route('/movies')
         movie.genres = req.body.genres;
         //save the movie
         Movie.updateOne({_id:req.body.movie_id}, {$set: movie}, function(err) {
-        //Movie.updateOne({title:req.body.current_title}, {$set: { title : req.body.title, genre : req.body.genre, year: req.body.year }}, function(err) {
             if (err){
                 res.send(err);
             }
@@ -682,11 +705,7 @@ router.route('/movies')
 
             //as long as excludeUnreviewed wasn't provided, find any movies that have no reviews
             if (!req.query.excludeUnreviewed) {
-                //start by getting all the id's of the returned movies
-                //reviewed_ids = movies.map((movie) => movie._id);
-                //console.log("reviewed ids:");
-                //console.log(reviewed_ids);
-                //find all movies that don't match an id in the reviewed_ids
+                //find all movies that haven't been reviewed yet
                 Movie.find({ $and:[
                         {reviewed: false},
                         {year : {$gte: minYear, $lte: maxYear}}
@@ -694,8 +713,6 @@ router.route('/movies')
                     unreviewedMovies.forEach((movie) => {
                         movie.avg_rating = 0.0;
                     });
-                    //console.log("unreviewed movies set to 1 star rating:");
-                    //console.log(unreviewedMovies);
                     //now add unreviewed movies to the rest of the movies
                     movies.push.apply(movies, unreviewedMovies);
                     //re-sort with the unreviewed movies
