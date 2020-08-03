@@ -311,7 +311,7 @@ router.route('/reviews/movie/:movie_id')
 
 router.route('/reviews/user/:username')
     .get(authJwtController.isAuthenticated, function(req, res){
-        Review.find({name: req.params.username}).select('movie_id').exec(function(err, reviews) {
+        Review.find({name: req.params.username}).select('movie_id rating quote').exec(function(err, reviews) {
             if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
             else return res.status(200).json({success: true, reviews: reviews});
         });
