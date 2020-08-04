@@ -174,7 +174,7 @@ router.route('/users/profilePic')
     .put(authJwtController.isAuthenticated, function (req, res) {
         User.find().select().exec(function(err, users){
             users.forEach( (user) => {
-                user.profile_pic = "https://lh3.googleusercontent.com/proxy/YbAcyq6fM79SHJGMKczVtgquJLA7oQaub9RxSPVzzoW6QAfjOwpiBxllE22CpnILhAPGHiKL1p1CrT7GWVU64VVrZaL85vRNsvZqIAHw7Rp_mfNglSwGZrtkXjmlg0KMmgs"
+                user.profile_pic = "https://as2.ftcdn.net/jpg/02/15/84/43/500_F_215844325_ttX9YiIIyeaR7Ne6EaLLjMAmy4GvPC69.jpg"
                 User.updateOne({_id:user._id}, {$set: user}, function(err) {
                     if (err){
                         res.send(err);
@@ -242,6 +242,26 @@ router.route('/profilePic/user/:username')
             if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
             return res.status(200).json({success: true, profilePic: user.profile_pic});
         });
+    });
+
+router.route('/profilePic')
+    .put(authJwtController.isAuthenticated, function(req, res){
+        //get the user from the token
+        auth = req.headers.authorization.split(' ')[1];
+        verified = jwt.verify(auth, authJwtController.secret);
+        console.log("verified");
+        console.log(verified);
+        let user = {};
+        user.profile_pic = req.body.profilePic;
+        console.log("user");
+        console.log(user);
+        User.updateOne({username: verified.username}, {$set: user}, function (err) {
+            if (err) {
+                res.send(err);
+            } else {
+                res.status(200).send({msg: "updated user", });
+            }
+        })
     });
 
 router.route('/watchlist/user/:username')
