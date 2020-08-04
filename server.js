@@ -238,9 +238,12 @@ router.route('/watchlist')
 router.route('/profilePic/user/:username')
     .get(authJwtController.isAuthenticated, function(req, res){
         User.findOne({username: req.params.username}).select('profile_pic').exec(function(err, user) {
-            console.log(user);
             if (err) return res.status(400).json({ success: false, message: 'An error occurred'});
-            return res.status(200).json({success: true, profilePic: user.profile_pic});
+            console.log("user info");
+            console.log(typeof user);
+            console.log(user);
+            if (user == null) return res.status(200).json({success: true, profilePic: "https://as2.ftcdn.net/jpg/02/15/84/43/500_F_215844325_ttX9YiIIyeaR7Ne6EaLLjMAmy4GvPC69.jpg"})
+            else return res.status(200).json({success: true, profilePic: user.profile_pic});
         });
     });
 
@@ -397,20 +400,29 @@ router.route('/movies/:movie_id')
     .get(authJwtController.isAuthenticated, function (req, res) {
         let movie_id = mongoose.Types.ObjectId(req.params.movie_id);
         Movie.findOne({_id: movie_id}).select('title year genre genres image_url trailer_url').exec(function (err, movie) {
+            //console.log("movie:");
+            //console.log(movie);
             if (err) res.send(err);
-            else if (movie == null) res.status(400).send({msg: "movie by that name not found"});
-            Review.find({movie_id : movie._id}).select('rating').exec( function(err, reviews) {
-                console.log(reviews);
-                let ratings = 0;
-                reviews.forEach( review => {ratings = ratings + review.rating} );
-                console.log(ratings);
-                console.log(reviews.length);
-                console.log(ratings/reviews.length);
-                let avgRating = ratings/reviews.length;
-                movie.avg_rating = parseFloat(avgRating.toFixed(1));
-                res.status(200).send({msg: "GET movie and reviews", movie: movie});
-            });
-
+            else if (movie == null) {
+                console.log("null movie:");
+                console.log(movie_id);
+                res.status(400).send({msg: "movie by that name not found"});
+            }
+            else {
+                Review.find({movie_id: movie._id}).select('rating').exec(function (err, reviews) {
+                    //console.log(reviews);
+                    let ratings = 0;
+                    reviews.forEach(review => {
+                        ratings = ratings + review.rating
+                    });
+                    console.log(ratings);
+                    console.log(reviews.length);
+                    console.log(ratings / reviews.length);
+                    let avgRating = ratings / reviews.length;
+                    movie.avg_rating = parseFloat(avgRating.toFixed(1));
+                    res.status(200).send({msg: "GET movie and reviews", movie: movie});
+                });
+            }
         });
     });
 
